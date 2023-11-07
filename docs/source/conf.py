@@ -17,7 +17,7 @@ sys.path.insert(0, os.path.abspath('../..'))
 
 # -- Project information -----------------------------------------------------
 
-project = 'swsh'
+project = 'spheroidal'
 copyright = '2023, Seyong Park'
 author = 'Seyong Park'
 
@@ -58,11 +58,11 @@ exclude_patterns = []
 html_theme = 'sphinx_book_theme'
 
 html_theme_options = {
-    "repository_url": "https://github.com/syp2001/swsh",
+    "repository_url": "https://github.com/syp2001/spheroidal",
     "use_repository_button": True,
     "navbar_end": ["navbar-icon-links"],
 }
-html_title = "swsh"
+html_title = "spheroidal"
 html_context = {
     "default_mode": "light"
 }
