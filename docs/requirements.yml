@@ -1,0 +1,12 @@
+name: swsh-env
+
+dependencies:
+  - ipython
+  - sphinx
+  - scipy
+  - numpy
+  - spherical
+  - pip
+  - python=3.12
+  - sphinx-book-theme
+  - myst-nb
