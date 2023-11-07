@@ -1,0 +1,7 @@
+ipython
+sphinx
+scipy
+numpy
+spherical
+sphinx-book-theme
+myst-nb
