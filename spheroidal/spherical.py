@@ -1,7 +1,8 @@
-
+import numpy as np
 from scipy.special import factorial, binom
 from numpy import sqrt, sin, cos, tan, exp, pi
 from scipy.sparse import diags
+from scipy.linalg import eig_banded
 from spherical import clebsch_gordan
 
 def sphericalY(s,l,m):
@@ -64,7 +65,7 @@ def sphericalY_deriv(s,l,m):
 
 def c1(s,m,j,l):
     r"""
-    Computes the matrix element :math:`\langle sjm | \cos{\theta} | slm\rangle`
+    Computes the inner product :math:`\langle sjm | \cos{\theta} | slm\rangle` where :math:`|slm\rangle` is the spin-weighted spherical harmonic :math:`{}_{s}Y_{lm}`
 
     :param s: spin weight
     :type s: int
@@ -81,7 +82,7 @@ def c1(s,m,j,l):
 
 def c2(s,m,j,l):
     r"""
-    Computes the matrix element :math:`\langle sjm | \cos^2{\theta} | slm\rangle`
+    Computes the inner product :math:`\langle sjm | \cos^2{\theta} | slm\rangle` where :math:`|slm\rangle` is the spin-weighted spherical harmonic :math:`{}_{s}Y_{lm}`
 
     :param s: spin weight
     :type s: int
@@ -96,8 +97,9 @@ def c2(s,m,j,l):
     """
     return (1/3 if j==l else 0) + 2/3*sqrt((2*l+1)/(2*j+1))*clebsch_gordan(l,m,2,0,j,m)*clebsch_gordan(l,-s,2,0,j,-s)
 
-def spectral_matrix(s,m,g,order):
+def spectral_matrix_bands(s,m,g,order):
     """
+    Returns the diagonal bands of the matrix used to compute the spherical-spheroidal coupling coefficients
 
     :param s: spin weight
     :type s: int
@@ -109,11 +111,58 @@ def spectral_matrix(s,m,g,order):
     :type order: int
     """
     l_min = max(abs(s),abs(m))
-    K = diags(
+    return [[g**2*c2(s,m,l,l)-2*g*s*c1(s,m,l,l)-l*(l+1) for l in range(l_min,l_min+order)],
+            [g**2*c2(s,m,l+1,l)-2*g*s*c1(s,m,l+1,l) for l in range(l_min,l_min+order)],
+            [g**2*c2(s,m,l+2,l) for l in range(l_min,l_min+order)]]
+
+def spectral_matrix(s,m,g,order):
+    """
+    Returns the matrix used to compute the spherical-spheroidal coupling coefficients
+
+    :param s: spin weight
+    :type s: int
+    :param m: order
+    :type m: int
+    :param g: spheroidicity
+    :type g: double
+    :param order: dimension of matrix
+    :type order: int
+    """
+    l_min = max(abs(s),abs(m))
+    return diags(
         [[g**2*c2(s,m,l-2,l) for l in range(l_min+2,l_min+order)],
          [g**2*c2(s,m,l-1,l)-2*g*s*c1(s,m,l-1,l) for l in range(l_min+1,l_min+order)],
          [g**2*c2(s,m,l,l)-2*g*s*c1(s,m,l,l)-l*(l+1) for l in range(l_min,l_min+order)],
          [g**2*c2(s,m,l+1,l)-2*g*s*c1(s,m,l+1,l) for l in range(l_min,l_min+order-1)],
          [g**2*c2(s,m,l+2,l) for l in range(l_min,l_min+order-2)]],
         offsets = [-2,-1,0,1,2]
-    )
+    ).todense()
+
+def coupling_coefficients(s,ell,m,g,num_terms):
+    """
+    Computes the spherical-spheroidal coupling coefficients up to the specified number of terms
+
+    :param s: spin weight
+    :type s: int
+    :param m: order
+    :type m: int
+    :param g: spheroidicity
+    :type g: double
+    :param num_terms: number of terms in the expansion
+    :type num_terms: int
+
+    :return: array of coupling coefficients
+    :rtype: numpy.ndarray
+    """
+    l_min = max(abs(s),abs(m))
+
+    K_bands = spectral_matrix_bands(s,m,g,num_terms)
+    
+    eigs_output = eig_banded(K_bands,lower=True)
+    # eig_banded returns the separation constants in ascending order, so eigenvectors are sorted by decreasing spheroidal eigenvalue
+    eigenvectors = np.transpose(eigs_output[1])
+
+     # enforce sign convention that ell=l mode is positive
+    sign = np.sign(eigenvectors[num_terms-1-(ell-l_min)][ell-l_min])
+
+    return sign*eigenvectors[num_terms-1-(ell-l_min)]
