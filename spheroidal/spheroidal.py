@@ -70,6 +70,37 @@ def harmonic(s,ell,m,g,method="spectral",num_terms=None,n_max=100):
     
     raise ValueError("Invalid method: {}".format(method))
 
+def harmonic_deriv(s,ell,m,g,method="spectral",num_terms=None):
+    r"""
+    Computes the derivative with respect of theta of the spin-weighted spheroidal harmonic with spin-weight s, degree l, order m, and spheroidicity g. 
+    Returns a function of theta and phi. Uses the spherical expansion method described in Appendix A of `(Hughes, 2000) <https://journals.aps.org/prd/pdf/10.1103/PhysRevD.61.084004>`_ by default.
+    Also supports the continued fraction method described in `(Leaver, 1985) <https://www.edleaver.com/Misc/EdLeaver/Publications/AnalyticRepresentationForQuasinormalModesOfKerrBlackHoles.pdf>`_.
+
+    :param s: spin-weight
+    :type s: half-integer
+    :param ell: degree
+    :type ell: half-integer
+    :param m: order
+    :type m: half-integer
+    :param g: spheroidicity
+    :type g: double
+    :param method: method used to compute the harmonic (options are "spectral" and "leaver"), defaults to "spectral"
+    :type method: str, optional
+    :param num_terms: number of terms used in the spherical expansion, ignored if method is "leaver", automatic by default
+    :type num_terms: int, optional
+    :param n_max: maximum number of terms in the spherical expansion, ignored if method is "leaver", defaults to 100
+    :type n_max: int, optional
+
+    :return: derivative of the spin-weighted spheroidal harmonic :math:`\frac{d}{d\theta}\left({}_{s}S_{lm}(\theta,\phi)\right)`
+    :rtype: function
+    """
+    if method == "leaver":
+        return harmonic_leaver_deriv(s,ell,m,g,num_terms)
+    if method == "spectral":
+        return harmonic_spectral_deriv(s,ell,m,g,num_terms)
+    
+    raise ValueError("Invalid method: {}".format(method))
+
 def eigenvalue_spectral(s,ell,m,g,num_terms=None,n_max=100):
     """
     Computes the spin-weighted spheroidal eigenvalue with spin-weight s, degree l, order m, and spheroidicity g
@@ -342,43 +373,68 @@ def harmonic_leaver(s,ell,m,g,num_terms=None):
     
     return Sslm
 
-def harmonic_spectral_deriv(s,ell,m,g,num_terms):
-    """
-    Computes the spin-weighted spheroidal harmonic with spin-weight s, degree l, order m, and spheroidicity g
+def harmonic_spectral_deriv(s,ell,m,g,num_terms,n_max=100):
+    r"""
+    Computes the derivative with respect to theta of the spin-weighted spheroidal harmonic with spin-weight s, degree l, order m, and spheroidicity g using the spherical expansion method.
 
     :param s: spin weight
-    :type s: int
+    :type s: half-integer
     :param ell: degree
-    :type ell: int
+    :type ell: half-integer
     :param m: order
-    :type m: int
+    :type m: half-integer
     :param g: spheroidicity
-    :type g: int
+    :type g: double
     :param num_terms: number of terms in the expansion
     :type num_terms: int
 
-    :return: spin-weighted spheroidal harmonic :math:`{}_{s}S_{lm}`
+    :return: derivative of the spin-weighted spheroidal harmonic :math:`\frac{d}{d\theta}\left({}_{s}S_{lm}(\theta,\phi)\right)`
     :rtype: function
     """
     l_min = max(abs(s),abs(m))
-    coefficients = coupling_coefficients(s,ell,m,g,num_terms)
+    if num_terms is None:
+        # adaptively increase the number of terms until the final coefficient is zero
+        for i in range(20,n_max,10):
+            coefficients = coupling_coefficients(s,ell,m,g,i)
+            if coefficients[-1] == 0:
+                break
+    else:
+        coefficients = coupling_coefficients(s,ell,m,g,num_terms)
 
-    def Sslm(theta,phi):
-        spherical_harmonics = np.array([sphericalY_deriv(s,l,m)(theta,phi) for l in range(l_min,l_min+num_terms)])
+    def dS(theta,phi):
+        spherical_harmonics = np.array([sphericalY_deriv(s,l,m)(theta,phi) for l in range(l_min,l_min+len(coefficients))])
         return spherical_harmonics.dot(coefficients)
     
-    return Sslm
+    return dS
 
-def eigenvalue_leaver(s,ell,m,g):
+def harmonic_leaver_deriv(s,ell,m,g,num_terms=None):
+    r"""
+    Computes the derivative with respect to theta of the spin-weighted spheroidal harmonic with spin-weight s, degree l, order m, and spheroidicity g using Leaver's method.
 
-    spectral_Alm = eigenvalue_spectral(s,ell,m,g,10)-g**2+2*m*g
-    return root_scalar(continued_fraction,args=(s,ell,m,g),x0=spectral_Alm,x1=spectral_Alm+0.1).root+g**2-2*m*g
+    :param s: spin weight
+    :type s: half-integer
+    :param ell: degree
+    :type ell: half-integer
+    :param m: order
+    :type m: half-integer
+    :param g: spheroidicity
+    :type g: double
+    :param num_terms: number of terms in the expansion
+    :type num_terms: int
 
-def harmonic_leaver(s,ell,m,g,num_terms):
-    pass
+    :return: derivative of the spin-weighted spheroidal harmonic :math:`\frac{d}{d\theta}\left({}_{s}S_{lm}(\theta,\phi)\right)`
+    :rtype: function
+    """
+    k1 = 1/2*abs(m-s)
+    k2 = 1/2*abs(m+s)
 
-def eigenvalue(s,ell,m,g,num_terms):
-    pass
+    a = leaver_coefficients(s,ell,m,g,num_terms)
 
-def harmonic(s,ell,m,g,num_terms):
-    pass
+    # polynomial component of the series expansion written in terms of x = 1+u = 1+cos(theta)
+    polynomial_term = Polynomial([0,1])**k1*Polynomial([2,-1])**k2*Polynomial(a)
+
+    def dS(theta,phi):
+        u = np.cos(theta)
+        return -np.sin(theta)*(np.exp(g*u)*polynomial_term.deriv()(1+u)+g*np.exp(g*u)*polynomial_term(1+u))*np.exp(1j*m*phi)
+    
+    return dS
