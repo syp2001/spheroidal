@@ -4,21 +4,20 @@ from scipy.linalg import eigvals_banded, eig_banded
 from scipy.optimize import root_scalar
 from numba import jit
 
-@jit(nopython=True)
-def continued_fraction(A,s,ell,m,g,tol=1e-14,n_max=100):
+@njit
+def continued_fraction(A,s,ell,m,g,n_max=100):
     """
-    Evaluates the continued fraction in equation 21 of `Leaver, 1985 <https://www.edleaver.com/Misc/EdLeaver/Publications/AnalyticRepresentationForQuasinormalModesOfKerrBlackHoles.pdf>`_ to the desired tolerance using Lentz's method.
+    Evaluates the continued fraction in equation 21 of `(Leaver, 1985) <https://www.edleaver.com/Misc/EdLeaver/Publications/AnalyticRepresentationForQuasinormalModesOfKerrBlackHoles.pdf>`_ 
+    to the desired tolerance using Lentz's method.
 
     :param A: angular separation constant
     :type A: double
     :param s: spin weight
-    :type s: int
+    :type s: half-integer
     :param ell: degree
-    :type ell: int
+    :type ell: half-integer
     :param m: order
-    :type m: int
-    :param tol: numerical tolerance
-    :type tol: double
+    :type m: half-integer
     :param n_max: maximum number of iterations
     :type n_max: int
 
@@ -40,7 +39,7 @@ def continued_fraction(A,s,ell,m,g,tol=1e-14,n_max=100):
         D = 1/(beta(n,A)-alpha(n-1)*gamma(n)*D)
         f = C*D*f_prev
         # break when tolerance is reached
-        if (abs(f-f_prev) < 1e-14):
+        if (f==f_prev):
             break
         f_prev = f
     return f
