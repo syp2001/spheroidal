@@ -1,7 +1,74 @@
 from .spherical import *
 import numpy as np
-from scipy.linalg import eigvals_banded, eig_banded
+from scipy.linalg import eigvals_banded
 from scipy.optimize import root_scalar
+from scipy import special
+from numpy.polynomial import Polynomial
+from numba import njit
+
+def eigenvalue(s,ell,m,g,method="spectral",num_terms=None,n_max=100):
+    """
+    Computes the spin-weighted spheroidal eigenvalue with spin-weight s, degree l, order m, and spheroidicity g.
+    Uses the spherical expansion method described in Appendix A of `(Hughes, 2000) <https://journals.aps.org/prd/pdf/10.1103/PhysRevD.61.084004>`_ by default.
+    Also supports the continued fraction method described in `(Leaver, 1985) <https://www.edleaver.com/Misc/EdLeaver/Publications/AnalyticRepresentationForQuasinormalModesOfKerrBlackHoles.pdf>`_.
+
+    :param s: spin-weight
+    :type s: half-integer
+    :param ell: degree
+    :type ell: half-integer
+    :param m: order
+    :type m: half-integer
+    :param g: spheroidicity
+    :type g: double
+    :param method: method used to compute the eigenvalue (options are "spectral" and "leaver"), defaults to "spectral"
+    :type method: str, optional
+    :param num_terms: number of terms used in the spherical expansion, ignored if method is "leaver", automatic by default
+    :type num_terms: int, optional
+    :param n_max: maximum number of terms in the spherical expansion, ignored if method is "leaver", defaults to 100
+    :type n_max: int, optional
+
+    :return: spin-weighted spheroidal eigenvalue :math:`{}_{s}\lambda_{lm}`
+    :rtype: double
+    """
+    if method == "leaver":
+        return eigenvalue_leaver(s,ell,m,g)
+    
+    if method == "spectral":
+        return eigenvalue_spectral(s,ell,m,g,num_terms,n_max)
+    
+    raise ValueError("Invalid method: {}".format(method))
+
+def harmonic(s,ell,m,g,method="spectral",num_terms=None,n_max=100):
+    r"""
+    Computes the spin-weighted spheroidal harmonic with spin-weight s, degree l, order m, and spheroidicity g. Returns a function of theta and phi.
+    Uses the spherical expansion method described in Appendix A of `(Hughes, 2000) <https://journals.aps.org/prd/pdf/10.1103/PhysRevD.61.084004>`_ by default.
+    Also supports the continued fraction method described in `(Leaver, 1985) <https://www.edleaver.com/Misc/EdLeaver/Publications/AnalyticRepresentationForQuasinormalModesOfKerrBlackHoles.pdf>`_.
+
+    :param s: spin-weight
+    :type s: half-integer
+    :param ell: degree
+    :type ell: half-integer
+    :param m: order
+    :type m: half-integer
+    :param g: spheroidicity
+    :type g: double
+    :param method: method used to compute the harmonic (options are "spectral" and "leaver"), defaults to "spectral"
+    :type method: str, optional
+    :param num_terms: number of terms used in the spherical expansion, ignored if method is "leaver", automatic by default
+    :type num_terms: int, optional
+    :param n_max: maximum number of terms in the spherical expansion, ignored if method is "leaver", defaults to 100
+    :type n_max: int, optional
+
+    :return: spin-weighted spheroidal harmonic :math:`{}_{s}S_{lm}(\theta,\phi)`
+    :rtype: function
+    """
+    if method == "leaver":
+        return harmonic_leaver(s,ell,m,g,num_terms)
+    
+    if method == "spectral":
+        return harmonic_spectral(s,ell,m,g,num_terms,n_max)
+    
+    raise ValueError("Invalid method: {}".format(method))
 
 def eigenvalue_spectral(s,ell,m,g,num_terms=None,n_max=100):
     """
