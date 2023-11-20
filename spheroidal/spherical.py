@@ -4,17 +4,18 @@ from numpy import sqrt, sin, cos, tan, exp, pi
 from scipy.sparse import diags
 from scipy.linalg import eig_banded
 from spherical import clebsch_gordan
+from numba import njit
 
 def sphericalY(s,l,m):
     r"""
     Computes the spin-weighted spherical harmonic with spin weight s, degree l, and order m.
 
     :param s: spin weight
-    :type s: int
+    :type s: half-integer
     :param l: degree
     :type l: int
     :param m: order
-    :type m: int
+    :type m: half-integer
 
     :return: spin weighted spherical harmonic function :math:`{}_{s}Y_{lm}(\theta,\phi)`
     :rtype: function
@@ -24,11 +25,17 @@ def sphericalY(s,l,m):
     prefactor = (-1)**(l+m-s)*sqrt(factorial(l+m)*factorial(l-m)*(2*l+1)/(4*pi*factorial(l+s)*factorial(l-s)))
     
     def Y(theta,phi):
+        # if (m+s-2*l < 0) and 0 in theta:
+        #     Y0 = 0
+        #     for r in range(l+s+1):
+        #         Y0 = Y0 + (-1)**r*binom(l+s,r)*binom(l-s,r-s-m)*tan(pi/2)**(-2*r+s+m)
+        #     Y0 = (-1)**l*prefactor*sin(pi/2)**(2*l)*exp(1j*m*(phi+pi))*Y0
+        if theta == 0: theta = 1e-14
         alternating_sum = 0
         for r in range(l-s+1):
             alternating_sum = alternating_sum + (-1)**r*binom(l-s,r)*binom(l+s,r+s-m)*tan(theta/2)**(-2*r-s+m)
 
-        return  prefactor*sin(theta/2)**(2*l)*exp(1j*m*phi)*alternating_sum 
+        return  prefactor*sin(theta/2)**(2*l)*exp(1j*m*phi)*alternating_sum
     
     return Y
 
@@ -37,20 +44,20 @@ def sphericalY_deriv(s,l,m):
     Computes the derivative with respect to theta of the spin-weighted spherical harmonic with spin weight s, degree l, and order m.
 
     :param s: spin weight
-    :type s: int
+    :type s: half-integer
     :param l: degree
     :type l: int
     :param m: order
-    :type m: int
+    :type m: half-integer
 
     :return: spin weighted spherical harmonic function :math:`\frac{d{}_{s}Y_{lm}(\theta,\phi)}{d\theta}`
     :rtype: function
     """
     # https://en.wikipedia.org/wiki/Spin-weighted_spherical_harmonics
     prefactor = (-1)**(l+m-s)*sqrt(factorial(l+m)*factorial(l-m)*(2*l+1)/(4*pi*factorial(l+s)*factorial(l-s)))
-
+    
     def dY(theta,phi):
-        
+        if theta == 0: theta = 1e-14
         alternating_sum_deriv = 0
         alternating_sum = 0
 
@@ -63,14 +70,15 @@ def sphericalY_deriv(s,l,m):
         return  prefactor*(2*l*sin(theta/2)**(2*l-1)*cos(theta/2)/2*alternating_sum + sin(theta/2)**(2*l)*alternating_sum_deriv)*exp(1j*m*phi)
     return dY
 
+@njit
 def c1(s,m,j,l):
     r"""
     Computes the inner product :math:`\langle sjm | \cos{\theta} | slm\rangle` where :math:`|slm\rangle` is the spin-weighted spherical harmonic :math:`{}_{s}Y_{lm}`
 
     :param s: spin weight
-    :type s: int
+    :type s: half-integer
     :param m: order
-    :type m: int
+    :type m: half-integer
     :param l: degree 1
     :type l: int
     :param j: degree 2
@@ -80,14 +88,15 @@ def c1(s,m,j,l):
     """
     return sqrt((2*l+1)/(2*j+1))*clebsch_gordan(l,m,1,0,j,m)*clebsch_gordan(l,-s,1,0,j,-s)
 
+@njit
 def c2(s,m,j,l):
     r"""
     Computes the inner product :math:`\langle sjm | \cos^2{\theta} | slm\rangle` where :math:`|slm\rangle` is the spin-weighted spherical harmonic :math:`{}_{s}Y_{lm}`
 
     :param s: spin weight
-    :type s: int
+    :type s: half-integer
     :param m: order
-    :type m: int
+    :type m: half-integer
     :param l: degree 1
     :type l: int
     :param j: degree 2
@@ -97,32 +106,37 @@ def c2(s,m,j,l):
     """
     return (1/3 if j==l else 0) + 2/3*sqrt((2*l+1)/(2*j+1))*clebsch_gordan(l,m,2,0,j,m)*clebsch_gordan(l,-s,2,0,j,-s)
 
-def spectral_matrix_bands(s,m,g,order):
+@njit
+def spectral_matrix_bands(s,m,g,num_terms,offset=0):
     """
-    Returns the diagonal bands of the matrix used to compute the spherical-spheroidal coupling coefficients
+    Returns the diagonal bands of the matrix used to compute the spherical-spheroidal coupling coefficients.
 
     :param s: spin weight
-    :type s: int
+    :type s: half-integer
     :param m: order
-    :type m: int
+    :type m: half-integer
     :param g: spheroidicity
     :type g: double
-    :param order: dimension of matrix
-    :type order: int
+    :param num_terms: dimension of matrix
+    :type num_terms: int
+    :param offset: index along the main diagonal at which to start computing terms
+    :type offset: int
+
+    :return: array of shape (3,num_terms) containing the main diagonal of the matrix followed by the two diagonals below it
     """
     l_min = max(abs(s),abs(m))
-    return [[g**2*c2(s,m,l,l)-2*g*s*c1(s,m,l,l)-l*(l+1) for l in range(l_min,l_min+order)],
-            [g**2*c2(s,m,l+1,l)-2*g*s*c1(s,m,l+1,l) for l in range(l_min,l_min+order)],
-            [g**2*c2(s,m,l+2,l) for l in range(l_min,l_min+order)]]
+    return [[g**2*c2(s,m,l,l)-2*g*s*c1(s,m,l,l)-l*(l+1) for l in range(offset+l_min,offset+l_min+num_terms)],
+            [g**2*c2(s,m,l+1,l)-2*g*s*c1(s,m,l+1,l) for l in range(offset+l_min,offset+l_min+num_terms)],
+            [g**2*c2(s,m,l+2,l) for l in range(offset+l_min,offset+l_min+num_terms)]]
 
 def spectral_matrix(s,m,g,order):
     """
     Returns the matrix used to compute the spherical-spheroidal coupling coefficients
 
     :param s: spin weight
-    :type s: int
+    :type s: half-integer
     :param m: order
-    :type m: int
+    :type m: half-integer
     :param g: spheroidicity
     :type g: double
     :param order: dimension of matrix
@@ -143,9 +157,9 @@ def coupling_coefficients(s,ell,m,g,num_terms):
     Computes the spherical-spheroidal coupling coefficients up to the specified number of terms
 
     :param s: spin weight
-    :type s: int
+    :type s: half-integer
     :param m: order
-    :type m: int
+    :type m: half-integer
     :param g: spheroidicity
     :type g: double
     :param num_terms: number of terms in the expansion
