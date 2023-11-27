@@ -221,7 +221,7 @@ def harmonic_spectral(s,ell,m,g,num_terms,n_max=100):
         coefficients = coupling_coefficients(s,ell,m,g,num_terms)
 
     def Sslm(theta,phi):
-        spherical_harmonics = np.array([sphericalY(s,l,m)(theta,phi) for l in range(l_min,l_min+len(coefficients))])
+        spherical_harmonics = np.array([sphericalY(s,l,m)(theta,phi) for l in np.arange(l_min,l_min+len(coefficients),1)])
         return spherical_harmonics.dot(coefficients)
     
     return Sslm
@@ -270,16 +270,16 @@ def continued_fraction(A,s,ell,m,g,n_max=100):
 def continued_fraction_deriv(A,s,ell,m,g,n_max=100):
     """
     Evaluates the derivative of the continued fraction in equation 21 of `(Leaver, 1985) <https://www.edleaver.com/Misc/EdLeaver/Publications/AnalyticRepresentationForQuasinormalModesOfKerrBlackHoles.pdf>`_ 
-    to the desired tolerance using automatic differentiation of Lentz's method as described in `https://duetosymmetry.com/notes/take-derivative-continued-fraction/`_.
+    until it converges to machine precision using automatic differentiation of Lentz's method as described in `https://duetosymmetry.com/notes/take-derivative-continued-fraction/`_.
 
     :param A: angular separation constant
     :type A: double
     :param s: spin weight
-    :type s: half-integer
+    :type s: int or half-integer float
     :param ell: degree
-    :type ell: half-integer
+    :type ell: int or half-integer float
     :param m: order
-    :type m: half-integer
+    :type m: int or half-integer float
     :param n_max: maximum number of iterations
     :type n_max: int
 
@@ -303,8 +303,8 @@ def continued_fraction_deriv(A,s,ell,m,g,n_max=100):
     for n in range(1,n_max):
         dC = -1 + alpha(n-1)*gamma(n)*dC/C**2
         C = beta(n,A)-alpha(n-1)*gamma(n)/C
-        dD = -(1/(beta(n,A)-alpha(n-1)*gamma(n)*D))**2*(-1-alpha(n-1)*gamma(n)*dD)
         D = 1/(beta(n,A)-alpha(n-1)*gamma(n)*D)
+        dD = -D**2*(-1-alpha(n-1)*gamma(n)*dD)
 
         f = C*D*f_prev
         df = dC*D*f_prev + C*dD*f_prev + C*D*df_prev
@@ -330,7 +330,7 @@ def eigenvalue_leaver(s,ell,m,g):
     :return: spin-weighted spheroidal eigenvalue :math:`{}_{s}\lambda_{lm}`
     :rtype: double
     """
-    spectral_A = eigenvalue_spectral(s,ell,m,g,ell+5)-g**2+2*m*g # approximate angular separation constant using spectral method
+    spectral_A = eigenvalue_spectral(s,ell,m,g,int(ell)+5)-g**2+2*m*g # approximate angular separation constant using spectral method
     # compute eigenvalue using root finding with newton's method
     return root_scalar(continued_fraction,args=(s,ell,m,g),x0=spectral_A,fprime=continued_fraction_deriv,method="newton").root+g**2-2*m*g
 
