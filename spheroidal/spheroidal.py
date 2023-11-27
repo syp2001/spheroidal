@@ -13,11 +13,11 @@ def eigenvalue(s,ell,m,g,method="spectral",num_terms=None,n_max=100):
     Also supports the continued fraction method described in `(Leaver, 1985) <https://www.edleaver.com/Misc/EdLeaver/Publications/AnalyticRepresentationForQuasinormalModesOfKerrBlackHoles.pdf>`_.
 
     :param s: spin-weight
-    :type s: half-integer
+    :type s: int or half-integer float
     :param ell: degree
-    :type ell: half-integer
+    :type ell: int or half-integer float
     :param m: order
-    :type m: half-integer
+    :type m: int or half-integer float
     :param g: spheroidicity
     :type g: double
     :param method: method used to compute the eigenvalue (options are "spectral" and "leaver"), defaults to "spectral"
@@ -45,11 +45,11 @@ def harmonic(s,ell,m,g,method="spectral",num_terms=None,n_max=100):
     Also supports the continued fraction method described in `(Leaver, 1985) <https://www.edleaver.com/Misc/EdLeaver/Publications/AnalyticRepresentationForQuasinormalModesOfKerrBlackHoles.pdf>`_.
 
     :param s: spin-weight
-    :type s: half-integer
+    :type s: int or half-integer float
     :param ell: degree
-    :type ell: half-integer
+    :type ell: int or half-integer float
     :param m: order
-    :type m: half-integer
+    :type m: int or half-integer float
     :param g: spheroidicity
     :type g: double
     :param method: method used to compute the harmonic (options are "spectral" and "leaver"), defaults to "spectral"
@@ -141,11 +141,11 @@ def eigenvalue_spectral(s,ell,m,g,num_terms=None,n_max=100):
     Computes the spin-weighted spheroidal eigenvalue with spin-weight s, degree l, order m, and spheroidicity g
 
     :param s: spin weight
-    :type s: half-integer
+    :type s: int or half-integer float
     :param ell: degree
-    :type ell: half-integer
+    :type ell: int or half-integer float
     :param m: order
-    :type m: half-integer
+    :type m: int or half-integer float
     :param g: spheroidicity
     :type g: double
     :param num_terms: number of terms in the spherical expansion, automatic by default
@@ -188,11 +188,11 @@ def harmonic_spectral(s,ell,m,g,num_terms,n_max=100):
     Computes the spin-weighted spheroidal harmonic with spin-weight s, degree l, order m, and spheroidicity g using the spherical expansion method.
 
     :param s: spin weight
-    :type s: half-integer
+    :type s: int or half-integer float
     :param ell: degree
-    :type ell: half-integer
+    :type ell: int or half-integer float
     :param m: order
-    :type m: half-integer
+    :type m: int or half-integer float
     :param g: spheroidicity
     :type g: double
     :param num_terms: number of terms in the expansion
@@ -224,16 +224,16 @@ def harmonic_spectral(s,ell,m,g,num_terms,n_max=100):
 def continued_fraction(A,s,ell,m,g,n_max=100):
     """
     Evaluates the continued fraction in equation 21 of `(Leaver, 1985) <https://www.edleaver.com/Misc/EdLeaver/Publications/AnalyticRepresentationForQuasinormalModesOfKerrBlackHoles.pdf>`_ 
-    to the desired tolerance using Lentz's method.
+    until it converges to machine precision using Lentz's method.
 
     :param A: angular separation constant
     :type A: double
     :param s: spin weight
-    :type s: half-integer
+    :type s: int or half-integer float
     :param ell: degree
-    :type ell: half-integer
+    :type ell: int or half-integer float
     :param m: order
-    :type m: half-integer
+    :type m: int or half-integer float
     :param n_max: maximum number of iterations
     :type n_max: int
 
@@ -314,11 +314,11 @@ def eigenvalue_leaver(s,ell,m,g):
     Computes the spin weighted spheroidal eigenvalue with spin-weight s, degree l, order m, and spheroidicity g using the continued fraction method described in `(Leaver, 1985) <https://www.edleaver.com/Misc/EdLeaver/Publications/AnalyticRepresentationForQuasinormalModesOfKerrBlackHoles.pdf>`_.
 
     :param s: spin weight
-    :type s: half-integer
+    :type s: int or half-integer float
     :param ell: degree
-    :type ell: half-integer
+    :type ell: int or half-integer float
     :param m: order
-    :type m: half-integer
+    :type m: int or half-integer float
     :param g: spheroidicity
     :type g: double
     :return: spin-weighted spheroidal eigenvalue :math:`{}_{s}\lambda_{lm}`
@@ -333,11 +333,11 @@ def leaver_coefficients(s,ell,m,g,num_terms=None,n_max=100):
     Computes the coefficients of the Frobenius expansion in equation 18 of `(Leaver, 1985) <https://www.edleaver.com/Misc/EdLeaver/Publications/AnalyticRepresentationForQuasinormalModesOfKerrBlackHoles.pdf>`_
 
     :param s: spin weight
-    :type s: half-integer
+    :type s: int or half-integer float
     :param ell: degree
-    :type ell: half-integer
+    :type ell: int or half-integer float
     :param m: order
-    :type m: half-integer
+    :type m: int or half-integer float
     :param g: spheroicity
     :type g: double
     :param num_terms: number of coefficients to compute, automatic by default
@@ -394,12 +394,30 @@ def leaver_coefficients(s,ell,m,g,num_terms=None,n_max=100):
 
     return a[:n]/norm
 
-def harmonic_leaver(s,ell,m,g,num_terms=None):
+def harmonic_leaver(s,ell,m,g,num_terms=None,n_max=100):
+    r"""
+    Computes the spin-weighted spheroidal harmonic with spin-weight s, degree l, order m, and spheroidicity g using Leaver's method.
 
+    :param s: spin weight
+    :type s: int or half-integer float
+    :param ell: degree
+    :type ell: int or half-integer float
+    :param m: order
+    :type m: int or half-integer float
+    :param g: spheroidicity
+    :type g: double
+    :param num_terms: number of terms in the expansion
+    :type num_terms: int
+    :param n_max: maximum number of terms in the expansion
+    :type n_max: int
+
+    :return: spin-weighted spheroidal harmonic :math:`{}_{s}S_{lm}(\theta,\phi)`
+    :rtype: function
+    """
     k1 = 1/2*abs(m-s)
     k2 = 1/2*abs(m+s)
 
-    a = leaver_coefficients(s,ell,m,g,num_terms)
+    a = leaver_coefficients(s,ell,m,g,num_terms,n_max)
 
     def Sslm(theta,phi):
         u = np.cos(theta)
