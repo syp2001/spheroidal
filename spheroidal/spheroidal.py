@@ -30,6 +30,9 @@ def eigenvalue(s,ell,m,g,method="spectral",num_terms=None,n_max=100):
     :return: spin-weighted spheroidal eigenvalue :math:`{}_{s}\lambda_{lm}`
     :rtype: double
     """
+    if g == 0:
+        return ell*(ell+1)-s*(s+1)
+    
     if method == "leaver":
         return eigenvalue_leaver(s,ell,m,g)
     
@@ -62,6 +65,9 @@ def harmonic(s,ell,m,g,method="spectral",num_terms=None,n_max=100):
     :return: spin-weighted spheroidal harmonic :math:`{}_{s}S_{lm}(\theta,\phi)`
     :rtype: function
     """
+    if g == 0:
+        return sphericalY(s,ell,m)
+    
     if method == "leaver":
         return harmonic_leaver(s,ell,m,g,num_terms)
     
