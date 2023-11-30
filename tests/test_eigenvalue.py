@@ -27,7 +27,7 @@ class TestEigenvalue(unittest.TestCase):
 
     def test_spherical_expansion_eigenvalue(self):
         """
-        Test the spherical expansion method for computing the eigenvalue
+        Test the spherical expansion method for computing the eigenvalue by comparing with Mathematica
         """
         spins = np.arange(-2,2.5,0.5)
         for s in spins:
@@ -44,7 +44,7 @@ class TestEigenvalue(unittest.TestCase):
 
     def test_leaver_eigenvalue(self):
         """
-        Test Leaver's continued fraction method for computing the eigenvalue
+        Test Leaver's continued fraction method for computing the eigenvalue by comparing with Mathematica
         """
         spins = np.arange(-2,2.5,0.5)
         for s in spins:

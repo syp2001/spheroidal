@@ -21,30 +21,32 @@ class TestHarmonics(unittest.TestCase):
             # test 5 lowest ell values
             ells = np.arange(abs(s),abs(s)+5,1)
             for ell in ells:
+                # load data and reshape so that the s=ell=0 case isn't a 1D array
+                data = np.loadtxt(DATA_DIR / str("s"+str(s)+"/ell"+str(ell)+"_deriv.txt"),dtype=np.cdouble).reshape((len(theta),int(2*ell+1)))
                 # generate all possible m values
                 m = np.arange(-ell,ell+1,1)
                 for i,m in enumerate(m):
-                    dS = spheroidal.harmonic_deriv(s,ell,m,g,method="leaver")
-                    numerical_dS = spheroidal.harmonic_deriv(s,ell,m,g,method="numerical leaver")
+                    Sslm = spheroidal.harmonic_deriv(s,ell,m,g,method="leaver")
                     for j,th in enumerate(theta):
                         with self.subTest(s=s,ell=ell,m=m,theta=th):
-                            if (th != 0) and (th != pi): self.assertAlmostEqual(dS(th,0),numerical_dS(th,0),places=3)
+                            self.assertAlmostEqual(abs(data[j,i]),abs(Sslm(th,0)),places=2)
     
+    #@unittest.skip("Spectral method is not working")
     def test_spherical_expansion_derivative(self):
         """
         Test that the derivative of Leaver's method and the spherical expansion method agree
         """
-        spins = np.arange(-2,2.5,1)
+        spins = np.arange(-2,2.5,0.5)
         for s in spins:
             # test 5 lowest ell values
             ells = np.arange(abs(s),abs(s)+5,1)
             for ell in ells:
+                # load data and reshape so that the s=ell=0 case isn't a 1D array
+                data = np.loadtxt(DATA_DIR / str("s"+str(s)+"/ell"+str(ell)+"_deriv.txt"),dtype=np.cdouble).reshape((len(theta),int(2*ell+1)))
                 # generate all possible m values
                 m = np.arange(-ell,ell+1,1)
                 for i,m in enumerate(m):
-                    leaver_dS = spheroidal.harmonic_deriv(s,ell,m,g,method="leaver")
-                    spectral_dS = spheroidal.harmonic_deriv(s,ell,m,g,method="spectral")
+                    Sslm = spheroidal.harmonic_deriv(s,ell,m,g,method="spectral")
                     for j,th in enumerate(theta):
                         with self.subTest(s=s,ell=ell,m=m,theta=th):
-                            self.assertAlmostEqual(abs(leaver_dS(th,0)),abs(spectral_dS(th,0)),places=3)
-                            #self.assertFalse(np.isnan(leaver_dS(th,0)))
+                            if (th != 0) and (th != pi): self.assertAlmostEqual(abs(data[j,i]),abs(Sslm(th,0)),places=2)

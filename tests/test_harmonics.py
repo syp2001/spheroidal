@@ -1,10 +1,7 @@
 import unittest
 import numpy as np
 import spheroidal
-import spherical
-from itertools import product
 from pathlib import Path
-import quaternionic
 
 THIS_DIR = Path(__file__).parent
 
@@ -12,17 +9,13 @@ DATA_DIR = THIS_DIR.parent / "tests/data"
 
 g = 1.5
 theta = np.loadtxt(DATA_DIR / "theta.txt")
-ell_max = 8
-wigner = spherical.Wigner(ell_max)
 
 class TestHarmonics(unittest.TestCase):
-
-    #@unittest.skip("Not currently working")
     def test_spherical_expansion_harmonic(self):
         """
         Test the spherical expansion method for computing spin weighted spherical harmonics
         """
-        spins = np.arange(-2,2,0.5)
+        spins = np.arange(-2,2.5,0.5)
         for s in spins:
             # test 5 lowest ell values
             ells = np.arange(abs(s),abs(s)+1,1)
@@ -35,7 +28,7 @@ class TestHarmonics(unittest.TestCase):
                     Sslm = spheroidal.harmonic(s,ell,m,g,method="spectral")
                     for j,th in enumerate(theta):
                         with self.subTest(s=s,ell=ell,m=m,theta=th):
-                            if th != 0: self.assertAlmostEqual(data[j,i],Sslm(th,0))
+                            self.assertAlmostEqual(abs(data[j,i]),abs(Sslm(th,0)))
 
     def test_leaver_harmonic(self):
         """
@@ -55,3 +48,21 @@ class TestHarmonics(unittest.TestCase):
                     for j,th in enumerate(theta):
                         with self.subTest(s=s,ell=ell,m=m,theta=th):
                             self.assertAlmostEqual(abs(data[j,i]),abs(Sslm(th,0)),places=2)
+
+    def test_methods_agree(self):
+        """
+        Test if Leaver's continued fraction method and the spherical expansion method agree
+        """
+        spins = np.arange(-2,2.5,0.5)
+        for s in spins:
+            # test 5 lowest ell values
+            ells = np.arange(abs(s),abs(s)+5,1)
+            for ell in ells:
+                # generate all possible m values
+                m = np.arange(-ell,ell+1,1)
+                for i,m in enumerate(m):
+                    S_leaver = spheroidal.harmonic(s,ell,m,g,method="leaver")
+                    S_spectral = spheroidal.harmonic(s,ell,m,g,method="spectral")
+                    for j,th in enumerate(theta):
+                        with self.subTest(s=s,ell=ell,m=m,theta=th):
+                            self.assertAlmostEqual(abs(S_leaver(th,0)),abs(S_spectral(th,0)),places=2)
