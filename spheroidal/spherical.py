@@ -35,7 +35,6 @@ def sphericalY(s, l, m):
     )
 
     def Y(theta, phi):
-        # if theta == 0: theta = 1e-14
         alternating_sum = 0
         for r in range(int(max(m - s, 0)), int(min(l - s, l + m) + 1)):
             alternating_sum = alternating_sum + (-1) ** r * binom(l - s, r) * binom(
@@ -45,29 +44,6 @@ def sphericalY(s, l, m):
         return prefactor * exp(1j * m * phi) * alternating_sum
 
     return Y
-
-def sphericalY_numerical_deriv(s, l, m, dx=1e-5):
-    r"""Computes the numerical derivative with respect to theta of the 
-    spin-weighted spherical harmonic with spin weight s, degree l, and order m.
-
-    Parameters
-    ----------
-    s : int or half-integer float
-        spin weight
-    l : int
-        degree
-    m : int or half-integer float
-        order
-
-    Returns
-    -------
-    function
-        spin weighted spherical harmonic function
-        :math:`\frac{d{}_{s}Y_{lm}(\theta,\phi)}{d\theta}`
-    """
-    S = sphericalY(s, l, m)
-    return lambda theta, phi: (S(theta + dx, phi) - S(theta, phi)) / dx
-
 
 def sphericalY_deriv(s, l, m):
     r"""Computes the derivative with respect to theta of the 
@@ -97,8 +73,7 @@ def sphericalY_deriv(s, l, m):
     )
 
     def dY(theta, phi):
-        if theta == 0:
-            theta = 1e-14
+        theta = np.where(theta == 0, 1e-14, theta)
         alternating_sum_deriv = 0
         alternating_sum = 0
 
@@ -122,6 +97,28 @@ def sphericalY_deriv(s, l, m):
         return prefactor * (l * alternating_sum + alternating_sum_deriv) * exp(1j * m * phi)
 
     return dY
+
+def sphericalY_numerical_deriv(s, l, m, dx=1e-5):
+    r"""Computes the numerical derivative with respect to theta of the 
+    spin-weighted spherical harmonic with spin weight s, degree l, and order m.
+
+    Parameters
+    ----------
+    s : int or half-integer float
+        spin weight
+    l : int
+        degree
+    m : int or half-integer float
+        order
+
+    Returns
+    -------
+    function
+        spin weighted spherical harmonic function
+        :math:`\frac{d{}_{s}Y_{lm}(\theta,\phi)}{d\theta}`
+    """
+    S = sphericalY(s, l, m)
+    return lambda theta, phi: (S(theta + dx, phi) - S(theta, phi)) / dx
 
 def sphericalY_deriv2(s, ell, m):
     r"""Computes the second derivative with respect to theta of the 

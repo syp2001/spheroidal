@@ -34,7 +34,8 @@ extensions = [
     "sphinx.ext.autodoc",
     "sphinx.ext.autosummary",
     "myst_nb",
-    "sphinx.ext.viewcode"
+    "sphinx.ext.viewcode",
+    "sphinx.ext.napoleon",
 ]
 myst_enable_extensions = ["dollarmath", "amsmath"]
 nb_execution_mode = "off"

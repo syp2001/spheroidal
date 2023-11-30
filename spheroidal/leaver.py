@@ -308,6 +308,8 @@ def harmonic_leaver_deriv(s, ell, m, g, num_terms=None, n_max=100):
         spheroidicity
     num_terms : int
         number of terms in the expansion
+    n_max : int
+        maximum number of terms in the expansion
 
     Returns
     -------
@@ -324,8 +326,7 @@ def harmonic_leaver_deriv(s, ell, m, g, num_terms=None, n_max=100):
     series_deriv = series.deriv()
 
     def dS(theta, phi):
-        if theta == 0:
-            theta = 1e-14
+        theta = np.where(theta == 0, 1e-14, theta)
         u = np.cos(theta)
         # differentiate series using product/chain rule
         # f[theta_] := E^(g Cos[theta]) (1 + Cos[theta])^(k1) (1 - Cos[theta])^(k2)
@@ -343,6 +344,32 @@ def harmonic_leaver_deriv(s, ell, m, g, num_terms=None, n_max=100):
     return dS
 
 def harmonic_leaver_deriv2(s, ell, m, g, num_terms, n_max=100):
+    r"""
+    Computes the second derivative with respect to theta of the spin-weighted
+    spheroidal harmonic with spin-weight s, degree l, order m, and spheroidicity g
+    using Leaver's method.
+
+    Parameters
+    ----------
+    s : int or half-integer float
+        spin weight
+    ell : int or half-integer float
+        degree
+    m : int or half-integer float
+        order
+    g : double
+        spheroidicity
+    num_terms : int
+        number of terms in the expansion
+    n_max : int
+        maximum number of terms in the expansion
+    
+    Returns
+    -------
+    function
+        second derivative of the spin-weighted spheroidal harmonic
+        :math:`\frac{d^2}{d\theta^2}\left({}_{s}S_{lm}(\theta,\phi)\right)`
+    """
     eigenvalue = eigenvalue_spectral(s, ell, m, g, num_terms, n_max)
 
     S = harmonic_leaver(s, ell, m, g, num_terms, n_max)

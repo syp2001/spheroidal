@@ -31,7 +31,6 @@ class TestHarmonics(unittest.TestCase):
                         with self.subTest(s=s,ell=ell,m=m,theta=th):
                             self.assertAlmostEqual(abs(data[j,i]),abs(Sslm(th,0)),places=2)
     
-    #@unittest.skip("Spectral method is not working")
     def test_spherical_expansion_derivative(self):
         """
         Test that the derivative of Leaver's method and the spherical expansion method agree
