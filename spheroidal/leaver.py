@@ -341,3 +341,21 @@ def harmonic_leaver_deriv(s, ell, m, g, num_terms=None, n_max=100):
         ) * np.exp(1j * m * phi)
 
     return dS
+
+def harmonic_leaver_deriv2(s, ell, m, g, num_terms, n_max=100):
+    eigenvalue = eigenvalue_spectral(s, ell, m, g, num_terms, n_max)
+
+    S = harmonic_leaver(s, ell, m, g, num_terms, n_max)
+    dS = harmonic_leaver_deriv(s, ell, m, g, num_terms, n_max)
+
+    def dS2(theta, phi):
+        return (
+            g**2 * sin(theta) ** 2
+            + (m + s * cos(theta)) ** 2 / sin(theta) ** 2
+            + 2 * g * s * cos(theta)
+            - s
+            - 2 * m * g
+            - eigenvalue
+        ) * S(theta, phi) - cos(theta) / sin(theta) * dS(theta, phi)
+
+    return dS2

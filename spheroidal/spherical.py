@@ -123,6 +123,37 @@ def sphericalY_deriv(s, l, m):
 
     return dY
 
+def sphericalY_deriv2(s, ell, m):
+    r"""Computes the second derivative with respect to theta of the 
+    spin-weighted spherical harmonic with spin weight s, degree l, and order m.
+
+    Parameters
+    ----------
+    s : int or half-integer float
+        spin weight
+    l : int
+        degree
+    m : int or half-integer float
+        order
+
+    Returns
+    -------
+    function
+        spin weighted spherical harmonic function
+        :math:`\frac{d^2{}_{s}Y_{lm}(\theta,\phi)}{d\theta^2}`
+    """
+
+    S = sphericalY(s, ell, m)
+    dS = sphericalY_deriv(s, ell, m)
+
+    def dS2(theta, phi):
+        return (
+            + (m + s * cos(theta)) ** 2 / sin(theta) ** 2
+            - s
+            - ell * (ell + 1) + s * (s + 1)
+        ) * S(theta, phi) - cos(theta) / sin(theta) * dS(theta, phi)
+
+    return dS2
 
 @njit
 def diag0(s, m, g, l):
@@ -361,7 +392,7 @@ def mixing_coefficients(s, ell, m, g, num_terms):
         w, v = np.linalg.eig(matrix)
         v = np.transpose(v)
         v = v[np.argsort(abs(w))]
-        
+
         return v[int(ell - l_min)]
     # if g is real, matrix is symmetric, so eig_banded can be used
     else:
