@@ -1,10 +1,12 @@
 from .spherical import *
 from .spectral import *
 import numpy as np
-from scipy.optimize import root_scalar
+from scipy.optimize import newton
 from scipy import special
+import scipy
 from numpy.polynomial import Polynomial
 from numba import njit
+
 
 @njit
 def continued_fraction(A, s, ell, m, g, n_max=100):
@@ -38,11 +40,20 @@ def continued_fraction(A, s, ell, m, g, n_max=100):
     gamma = lambda n: 2 * g * (n + k1 + k2 + s)
 
     f_prev = beta(0, A)
+    if f_prev == 0:
+        f_prev = 1e-30
+
     C = f_prev
     D = 0
     for n in range(1, n_max):
         C = beta(n, A) - alpha(n - 1) * gamma(n) / C
-        D = 1 / (beta(n, A) - alpha(n - 1) * gamma(n) * D)
+        if C == 0:
+            C = 1e-30
+        D = beta(n, A) - alpha(n - 1) * gamma(n) * D
+        if D == 0:
+            D = 1e-30
+        D = 1 / D
+
         f = C * D * f_prev
         # break when tolerance is reached
         if f == f_prev:
@@ -83,6 +94,8 @@ def continued_fraction_deriv(A, s, ell, m, g, n_max=100):
     gamma = lambda n: 2 * g * (n + k1 + k2 + s)
 
     f_prev = beta(0, A)
+    if f_prev == 0:
+        f_prev = 1e-30
     df_prev = -1
     C = f_prev
     dC = df_prev
@@ -92,7 +105,12 @@ def continued_fraction_deriv(A, s, ell, m, g, n_max=100):
     for n in range(1, n_max):
         dC = -1 + alpha(n - 1) * gamma(n) * dC / C**2
         C = beta(n, A) - alpha(n - 1) * gamma(n) / C
-        D = 1 / (beta(n, A) - alpha(n - 1) * gamma(n) * D)
+        if C == 0:
+            C = 1e-30
+        D = beta(n, A) - alpha(n - 1) * gamma(n) * D
+        if D == 0:
+            D = 1e-30
+        D = 1 / D
         dD = -(D**2) * (-1 - alpha(n - 1) * gamma(n) * dD)
 
         f = C * D * f_prev
@@ -125,13 +143,9 @@ def eigenvalue_leaver(s, ell, m, g):
     )  # approximate angular separation constant using spectral method
     # compute eigenvalue using root finding with newton's method
     return (
-        root_scalar(
-            continued_fraction,
-            args=(s, ell, m, g),
-            x0=spectral_A,
-            fprime=continued_fraction_deriv,
-            method="newton",
-        ).root
+        newton(
+            continued_fraction, args=(s, ell, m, g), x0=spectral_A, fprime=continued_fraction_deriv
+        )
         + g**2
         - 2 * m * g
     )
@@ -157,9 +171,7 @@ def leaver_coefficients(s, ell, m, g, num_terms=None, n_max=100):
     :return: normalized array of coefficients
     :rtype: numpy.ndarray
     """
-    A = np.real(
-        eigenvalue_leaver(s, ell, m, g) - g**2 + 2 * m * g
-    )  # angular separation constant
+    A = eigenvalue_spectral(s, ell, m, g) - g**2 + 2 * m * g  # angular separation constant
 
     k1 = 1 / 2 * abs(m - s)
     k2 = 1 / 2 * abs(m + s)
@@ -173,7 +185,10 @@ def leaver_coefficients(s, ell, m, g, num_terms=None, n_max=100):
     )
     gamma = lambda n: 2 * g * (n + k1 + k2 + s)
 
-    a = np.zeros(n_max)
+    if np.iscomplex(g):
+        a = np.zeros(n_max, dtype=np.cdouble)
+    else:
+        a = np.zeros(n_max)
 
     # compute coefficients starting from a0 = 1 and normalize at the end
     a[0] = 1
@@ -210,11 +225,12 @@ def leaver_coefficients(s, ell, m, g, num_terms=None, n_max=100):
         2 * pi * 2 ** (1 + 2 * k1 + 2 * k2) * exp(-2 * g) * special.gamma(1 + 2 * k2) * norm
     )
 
+    sign = (-1.0) ** (ell + m - s + 0j) if m <= s else (-1.0) ** (ell + m - s + 1 + 0j)
     # square of the theta component of Sslm written in terms of x = 1+u = 1+cos(theta)
     # sslm2 = lambda x: np.exp(2*g*(x-1))*x**(2*k1)*(2-x)**(2*k2)*np.polynomial.Polynomial(a)(x)**2
-    # norm = sqrt(2*np.pi*scipy.integrate.quad(sslm2,0,2)[0])
+    # numerical_norm = sqrt(2*np.pi*scipy.integrate.quad(sslm2,0,2)[0])
 
-    return a[:n] / norm
+    return sign * a[:n] / norm
 
 
 def harmonic_leaver(s, ell, m, g, num_terms=None, n_max=100):
@@ -284,9 +300,13 @@ def harmonic_leaver_deriv(s, ell, m, g, num_terms=None):
         # f[theta_] := E^(g Cos[theta]) (1 + Cos[theta])^(k1) (1 - Cos[theta])^(k2)
         # Simplify[f'[theta], Assumptions -> Element[2 k1 | 2 k2, Integers]]
         return (
-            - np.sin(theta) * np.exp(g * u) * (1+u)**k1 * (1-u)**k2 * series_deriv(1 + u)
-            + np.exp(g*cos(theta))*(1 - cos(theta))**k2*(1 + cos(theta))**k1 
-            * (-g - k1 + k2 + (k1 + k2)*cos(theta) + g*cos(theta)**2)/sin(theta) * series(1 + u)
+            -np.sin(theta) * np.exp(g * u) * (1 + u) ** k1 * (1 - u) ** k2 * series_deriv(1 + u)
+            + np.exp(g * cos(theta))
+            * (1 - cos(theta)) ** k2
+            * (1 + cos(theta)) ** k1
+            * (-g - k1 + k2 + (k1 + k2) * cos(theta) + g * cos(theta) ** 2)
+            / sin(theta)
+            * series(1 + u)
         ) * np.exp(1j * m * phi)
 
     return dS
