@@ -1,6 +1,7 @@
 from .spherical import *
 from scipy.linalg import eigvals_banded
 
+
 def eigenvalue_spectral(s, ell, m, g, num_terms=None, n_max=100):
     """
     Computes the spin-weighted spheroidal eigenvalue with spin-weight s, degree l, order m, and spheroidicity g
@@ -24,29 +25,22 @@ def eigenvalue_spectral(s, ell, m, g, num_terms=None, n_max=100):
     l_min = max(abs(s), abs(m))
 
     if num_terms is None:
-        # adaptively increase the number of terms until machine precision is reached
-        matrix_bands = np.zeros((3, n_max))
-
-        # start with 10x10 matrix
-        matrix_bands[:, :10] = spectral_matrix_bands(s, m, g, num_terms=10)
-        eigvals = eigvals_banded(a_band=matrix_bands[:, :10], lower=True)
-        # eig_banded returns the separation constants in ascending order, so the spheroidal eigenvalues are in descending order
-        prev_eigenvalue = -eigvals[9 - int(ell - l_min)] - s * (s + 1) + g**2 - 2 * m * g
+        prev_sep_const = separation_constants(s, m, g, num_terms=10)[9 - int(ell - l_min)]
 
         for i in range(20, n_max, 10):
-            # add 10 more rows and columns to the matrix and compute the new eigenvalue
-            matrix_bands[:, i - 10 : i] = spectral_matrix_bands(s, m, g, 10, offset=i - 10)
-            eigvals = eigvals_banded(a_band=matrix_bands[:, :i], lower=True)
-            eigenvalue = -eigvals[i - 1 - int(ell - l_min)] - s * (s + 1) + g**2 - 2 * m * g
+            sep_const = separation_constants(s, m, g, num_terms=i)[i - 1 - int(ell - l_min)]
             # return eigenvalue once machine precision is reached
-            if eigenvalue == prev_eigenvalue:
-                return eigenvalue
-            prev_eigenvalue = eigenvalue
+            if sep_const == prev_sep_const:
+                return -sep_const - s * (s + 1) + g**2 - 2 * m * g
+            prev_sep_const = sep_const
+        return -sep_const - s * (s + 1) + g**2 - 2 * m * g
     else:
-        # compute the eigenvalue using the specified number of terms
-        matrix_bands = spectral_matrix_bands(s, m, g, num_terms)
-        eigvals = eigvals_banded(a_band=matrix_bands, lower=True)
-        return -eigvals[num_terms - 1 - int(ell - l_min)] - s * (s + 1) + g**2 - 2 * m * g
+        return (
+            -separation_constants(s, m, g, num_terms)[num_terms - 1 - int(ell - l_min)]
+            - s * (s + 1)
+            + g**2
+            - 2 * m * g
+        )
 
 
 def harmonic_spectral(s, ell, m, g, num_terms, n_max=100):
@@ -73,12 +67,12 @@ def harmonic_spectral(s, ell, m, g, num_terms, n_max=100):
     if num_terms is None:
         # adaptively increase the number of terms until the final coefficient is zero
         for i in range(20, n_max, 10):
-            coefficients = coupling_coefficients(s, ell, m, g, i)
+            coefficients = mixing_coefficients(s, ell, m, g, i)
             if coefficients[-1] == 0:
                 break
     else:
         # compute specified number of coefficients
-        coefficients = coupling_coefficients(s, ell, m, g, num_terms)
+        coefficients = mixing_coefficients(s, ell, m, g, num_terms)
 
     def Sslm(theta, phi):
         spherical_harmonics = np.array(
@@ -114,11 +108,11 @@ def harmonic_spectral_deriv(s, ell, m, g, num_terms, n_max=100):
     if num_terms is None:
         # adaptively increase the number of terms until the final coefficient is zero
         for i in range(20, n_max, 10):
-            coefficients = coupling_coefficients(s, ell, m, g, i)
+            coefficients = mixing_coefficients(s, ell, m, g, i)
             if coefficients[-1] == 0:
                 break
     else:
-        coefficients = coupling_coefficients(s, ell, m, g, num_terms)
+        coefficients = mixing_coefficients(s, ell, m, g, num_terms)
 
     def dS(theta, phi):
         spherical_harmonics = np.array(

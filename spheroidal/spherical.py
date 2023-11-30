@@ -2,7 +2,7 @@ import numpy as np
 from scipy.special import factorial, binom
 from numpy import sqrt, sin, cos, tan, exp, pi
 from scipy.sparse import diags
-from scipy.linalg import eig_banded
+from scipy.linalg import eig_banded, eigvals_banded
 from numba import njit
 
 
@@ -214,8 +214,8 @@ def diag2(s, m, g, l):
         )
     )
 
-
-def spectral_matrix_bands(s, m, g, num_terms, offset=0):
+@njit
+def spectral_matrix_bands(s, m, g, num_terms):
     """
     Returns the diagonal bands of the matrix used to compute the spherical-spheroidal mixing coefficients.
 
@@ -233,14 +233,18 @@ def spectral_matrix_bands(s, m, g, num_terms, offset=0):
     :return: array of shape (3,num_terms) containing the main diagonal of the matrix followed by the two diagonals below it
     """
     l_min = max(abs(s), abs(m))
-    return [
-        [diag0(s, m, g, l) for l in np.arange(offset + l_min, offset + l_min + num_terms, 1)],
-        [diag1(s, m, g, l) for l in np.arange(offset + l_min, offset + l_min + num_terms, 1)],
-        [diag2(s, m, g, l) for l in np.arange(offset + l_min, offset + l_min + num_terms, 1)],
-    ]
+    bands = np.zeros((3, num_terms))
+    for i in range(0, num_terms):
+        bands[0, i] = diag0(s, m, g, i + l_min)
+    for i in range(0, num_terms ):
+        bands[1, i] = diag1(s, m, g, i + l_min)
+    for i in range(0, num_terms ):
+        bands[2, i] = diag2(s, m, g, i + l_min)
+    
+    return bands
 
-
-def spectral_matrix(s, m, g, order):
+@njit
+def spectral_matrix_complex(s, m, g, order):
     """
     Returns the matrix used to compute the spherical-spheroidal mixing coefficients
 
@@ -254,14 +258,42 @@ def spectral_matrix(s, m, g, order):
     :type order: int
     """
     l_min = max(abs(s), abs(m))
-    return diags(
-        [
-            [diag0(s, m, g, l) for l in np.arange(l_min, l_min + order, 1)],
-            [diag1(s, m, g, l) for l in np.arange(l_min, l_min + order, 1)],
-            [diag2(s, m, g, l) for l in np.arange(l_min, l_min + order, 1)],
-        ],
-        offsets=[-2, -1, 0, 1, 2],
-    ).todense()
+    matrix = np.zeros((order, order),dtype=np.cdouble)
+    # fill main diagonal
+    for i in range(0, order):
+        matrix[i, i] = diag0(s, m, g, i + l_min)
+    # fill diagonals above and below main diagonal
+    for i in range(0, order - 1):
+        matrix[i, i + 1] = diag1(s, m, g, i + l_min)
+        matrix[i + 1, i] = diag1(s, m, g, i + l_min)
+    # fill diagonals two below and above main diagonal
+    for i in range(0, order - 2):
+        matrix[i, i + 2] = diag2(s, m, g, i + l_min)
+        matrix[i + 2, i] = diag2(s, m, g, i + l_min)
+    return matrix
+
+def separation_constants(s,m,g,num_terms):
+    """
+    Computes the angular separation constants up to the specified number of terms
+
+   :param s: spin weight
+    :type s: int or half-integer float
+    :param m: order
+    :type m: int or half-integer float
+    :param g: spheroidicity
+    :type g: double
+    :param num_terms: number of terms to compute
+    :type num_terms: int
+
+    :return: array of separation constants in ascending order
+    :rtype: numpy.ndarray
+    """
+    if np.iscomplex(g):
+        matrix = spectral_matrix_complex(s, m, g, num_terms)
+        return sorted(np.linalg.eigvals(matrix),key=abs,reverse=True)
+    else:
+        matrix_bands = spectral_matrix_bands(s, m, g, num_terms)
+        return eigvals_banded(a_band=matrix_bands, lower=True)
 
 
 def mixing_coefficients(s, ell, m, g, num_terms):
@@ -282,13 +314,20 @@ def mixing_coefficients(s, ell, m, g, num_terms):
     """
     l_min = max(abs(s), abs(m))
 
-    K_bands = spectral_matrix_bands(s, m, g, num_terms)
+    if np.iscomplex(g):
+        matrix = spectral_matrix_complex(s, m, g, num_terms)
+        w, v = np.linalg.eig(matrix)
+        v = np.transpose(v)
+        v = v[np.argsort(abs(w))]
+        return v[int(ell - l_min)]
+    else:
+        bands = spectral_matrix_bands(s, m, g, num_terms)
 
-    eigs_output = eig_banded(K_bands, lower=True)
-    # eig_banded returns the separation constants in ascending order, so eigenvectors are sorted by decreasing spheroidal eigenvalue
-    eigenvectors = np.transpose(eigs_output[1])
+        eigs_output = eig_banded(bands, lower=True)
+        # eig_banded returns the separation constants in ascending order, so eigenvectors are sorted by decreasing spheroidal eigenvalue
+        eigenvectors = np.transpose(eigs_output[1])
 
-    # enforce sign convention that ell=l mode is positive
-    sign = np.sign(eigenvectors[num_terms - 1 - int(ell - l_min)][int(ell - l_min)])
+        # enforce sign convention that ell=l mode is positive
+        sign = np.sign(eigenvectors[num_terms - 1 - int(ell - l_min)][int(ell - l_min)])
 
-    return sign * eigenvectors[num_terms - 1 - int(ell - l_min)]
+        return sign * eigenvectors[num_terms - 1 - int(ell - l_min)]
