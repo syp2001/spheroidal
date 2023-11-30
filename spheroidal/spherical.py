@@ -3,7 +3,7 @@ from scipy.special import factorial, binom
 from numpy import sqrt, sin, cos, tan, exp, pi
 from scipy.sparse import diags
 from scipy.linalg import eig_banded
-from sympy.physics.quantum.cg import CG as clebsch_gordan
+from numba import njit
 
 
 def sphericalY(s, l, m):
@@ -41,7 +41,6 @@ def sphericalY(s, l, m):
         return prefactor * exp(1j * m * phi) * alternating_sum
 
     return Y
-
 
 def sphericalY_numerical_deriv(s, l, m, dx=1e-5):
     r"""
@@ -111,54 +110,114 @@ def sphericalY_deriv(s, l, m):
     return dY
 
 
-# @njit
-def c1(s, m, j, l):
-    r"""
-    Computes the inner product :math:`\langle sjm | \cos{\theta} | slm\rangle` where :math:`|slm\rangle` is the spin-weighted spherical harmonic :math:`{}_{s}Y_{lm}`
+@njit
+def diag0(s, m, g, l):
+    """
+    Computes the main diagonal of the matrix used to compute the spherical-spheroidal mixing coefficients.
 
     :param s: spin weight
     :type s: int or half-integer float
     :param m: order
     :type m: int or half-integer float
-    :param l: degree 1
-    :type l: int
-    :param j: degree 2
-    :type j: int
+    :param g: spheroidicity
+    :type g: double
+    :param l: degree
+    :type l: int or half-integer float
+
+    :rtype: double
+    """
+    if l >= 1:
+        return (
+            -(l * (1 + l))
+            + (2 * g * m * s**2) / (l + l**2)
+            + (
+                g**2
+                * (
+                    1
+                    + (2 * (l + l**2 - 3 * m**2) * (l + l**2 - 3 * s**2))
+                    / (l * (-3 + l + 8 * l**2 + 4 * l**3))
+                )
+            )
+            / 3
+        )
+    if l == 1 / 2:
+        return g**2 / 3 - 3 / 4 + (8 * g * m * s**2) / 3
+    if l == 0:
+        return g**2 / 3
+
+
+@njit
+def diag1(s, m, g, l):
+    """
+    Computes the first diagonal below the main diagonal of the matrix used to compute 
+    the spherical-spheroidal mixing coefficients.
+
+    :param s: spin weight
+    :type s: int or half-integer float
+    :param m: order
+    :type m: int or half-integer float
+    :param g: spheroidicity
+    :type g: double
+    :param l: degree
+    :type l: int or half-integer float
+
+    :rtype: double
+    """
+    if l >= 1 / 2:
+        return (
+            -2
+            * (-1) ** (2 * (l + m))
+            * g
+            * (2 * l + l**2 + g * m)
+            * s
+            * sqrt(
+                ((1 + 2 * l) * (1 + 2 * l + l**2 - m**2) * (1 + 2 * l + l**2 - s**2))
+                / (3 + 2 * l)
+            )
+        ) / (l * (2 + l) * (1 + 3 * l + 2 * l**2))
+    if l == 0:
+        return (-2 * (-1) ** (2 * m) * g * s * sqrt((1 - m**2) * (1 - s**2))) / sqrt(3)
+
+
+@njit
+def diag2(s, m, g, l):
+    """
+    Computes the second diagonal below the main diagonal of the matrix used to compute
+    the spherical-spheroidal mixing coefficients.
+
+    :param s: spin weight
+    :type s: int or half-integer float
+    :param m: order
+    :type m: int or half-integer float
+    :param g: spheroidicity
+    :type g: double
+    :param l: degree
+    :type l: int or half-integer float
 
     :rtype: double
     """
     return (
-        sqrt((2 * l + 1) / (2 * j + 1))
-        * float(clebsch_gordan(l, m, 1, 0, j, m).doit())
-        * float(clebsch_gordan(l, -s, 1, 0, j, -s).doit())
+        (-1) ** (2 * (l + m))
+        * g**2
+        * sqrt(
+            (
+                (1 + l - m)
+                * (2 + l - m)
+                * (1 + l + m)
+                * (2 + l + m)
+                * (1 + l - s)
+                * (2 + l - s)
+                * (1 + l + s)
+                * (2 + l + s)
+            )
+            / ((1 + l) ** 2 * (2 + l) ** 2 * (1 + 2 * l) * (3 + 2 * l) ** 2 * (5 + 2 * l))
+        )
     )
 
 
-# @njit
-def c2(s, m, j, l):
-    r"""
-    Computes the inner product :math:`\langle sjm | \cos^2{\theta} | slm\rangle` where :math:`|slm\rangle` is the spin-weighted spherical harmonic :math:`{}_{s}Y_{lm}`
-
-    :param s: spin weight
-    :type s: int or half-integer float
-    :param m: order
-    :type m: int or half-integer float
-    :param l: degree 1
-    :type l: int
-    :param j: degree 2
-    :type j: int
-
-    :rtype: double
-    """
-    return (1 / 3 if j == l else 0) + 2 / 3 * sqrt((2 * l + 1) / (2 * j + 1)) * float(
-        clebsch_gordan(l, m, 2, 0, j, m).doit()
-    ) * float(clebsch_gordan(l, -s, 2, 0, j, -s).doit())
-
-
-# @njit
 def spectral_matrix_bands(s, m, g, num_terms, offset=0):
     """
-    Returns the diagonal bands of the matrix used to compute the spherical-spheroidal coupling coefficients.
+    Returns the diagonal bands of the matrix used to compute the spherical-spheroidal mixing coefficients.
 
     :param s: spin weight
     :type s: int or half-integer float
@@ -175,32 +234,15 @@ def spectral_matrix_bands(s, m, g, num_terms, offset=0):
     """
     l_min = max(abs(s), abs(m))
     return [
-        [
-            g**2 * c2(s, m, l, l) - 2 * g * s * c1(s, m, l, l) - l * (l + 1)
-            for l in np.arange(offset + l_min, offset + l_min + num_terms, 1)
-        ],
-        [
-            g**2 * c2(s, m, l + 1, l) - 2 * g * s * c1(s, m, l + 1, l)
-            for l in np.arange(offset + l_min, offset + l_min + num_terms, 1)
-        ],
-        [
-            g**2 * c2(s, m, l + 2, l)
-            for l in np.arange(offset + l_min, offset + l_min + num_terms, 1)
-        ],
+        [diag0(s, m, g, l) for l in np.arange(offset + l_min, offset + l_min + num_terms, 1)],
+        [diag1(s, m, g, l) for l in np.arange(offset + l_min, offset + l_min + num_terms, 1)],
+        [diag2(s, m, g, l) for l in np.arange(offset + l_min, offset + l_min + num_terms, 1)],
     ]
-
-    # return [[-(l*(1 + l)) + (2*m*s**2*g)/(l + l**2) + ((1 + (2*(l + l**2 - 3*m**2)*(l + l**2 - 3*s**2))/
-    #             (l*(-3 + l + 8*l**2 + 4*l**3)))*g**2)/3 for l in np.arange(offset+l_min,offset+l_min+num_terms,1)],
-    #         [(-2*s*sqrt(((1 + 2*l + l**2 - m**2)*(1 + 2*l + l**2 - s**2))/(3 + 8*l + 4*l**2))*
-    #             g*(2*l + l**2 + m*g))/(l*(2 + 3*l + l**2)) for l in np.arange(offset+l_min,offset+l_min+num_terms,1)],
-    #         [(sqrt(((1 + l - m)*(2 + l - m)*(1 + l + m)*(2 + l + m)*(1 + l - s)*(2 + l - s)*(1 + l + s)*(2 + l + s))/((1 + 2*l)*(5 + 2*l)))*g**2)/
-    #             ((1 + l)*(2 + l)*(3 + 2*l)) for l in np.arange(offset+l_min,offset+l_min+num_terms,1)]
-    #         ]
 
 
 def spectral_matrix(s, m, g, order):
     """
-    Returns the matrix used to compute the spherical-spheroidal coupling coefficients
+    Returns the matrix used to compute the spherical-spheroidal mixing coefficients
 
     :param s: spin weight
     :type s: int or half-integer float
@@ -214,32 +256,17 @@ def spectral_matrix(s, m, g, order):
     l_min = max(abs(s), abs(m))
     return diags(
         [
-            [
-                g**2 * c2(s, m, l - 2, l) for l in range(l_min + 2, l_min + order)
-            ],
-            [
-                g**2 * c2(s, m, l - 1, l) - 2 * g * s * c1(s, m, l - 1, l)
-                for l in range(l_min + 1, l_min + order)
-            ],
-            [
-                g**2 * c2(s, m, l, l) - 2 * g * s * c1(s, m, l, l) - l * (l + 1)
-                for l in range(l_min, l_min + order)
-            ],
-            [
-                g**2 * c2(s, m, l + 1, l) - 2 * g * s * c1(s, m, l + 1, l)
-                for l in range(l_min, l_min + order - 1)
-            ],
-            [
-                g**2 * c2(s, m, l + 2, l) for l in range(l_min, l_min + order - 2)
-            ],
+            [diag0(s, m, g, l) for l in np.arange(l_min, l_min + order, 1)],
+            [diag1(s, m, g, l) for l in np.arange(l_min, l_min + order, 1)],
+            [diag2(s, m, g, l) for l in np.arange(l_min, l_min + order, 1)],
         ],
         offsets=[-2, -1, 0, 1, 2],
     ).todense()
 
 
-def coupling_coefficients(s, ell, m, g, num_terms):
+def mixing_coefficients(s, ell, m, g, num_terms):
     """
-    Computes the spherical-spheroidal coupling coefficients up to the specified number of terms
+    Computes the spherical-spheroidal mixing coefficients up to the specified number of terms
 
     :param s: spin weight
     :type s: int or half-integer float
@@ -250,7 +277,7 @@ def coupling_coefficients(s, ell, m, g, num_terms):
     :param num_terms: number of terms in the expansion
     :type num_terms: int
 
-    :return: array of coupling coefficients
+    :return: array of mixing coefficients
     :rtype: numpy.ndarray
     """
     l_min = max(abs(s), abs(m))
