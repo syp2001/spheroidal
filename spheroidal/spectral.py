@@ -3,24 +3,29 @@ from scipy.linalg import eigvals_banded
 
 
 def eigenvalue_spectral(s, ell, m, g, num_terms=None, n_max=100):
-    """
-    Computes the spin-weighted spheroidal eigenvalue with spin-weight s, degree l, order m, and spheroidicity g
+    """Computes the spin-weighted spheroidal eigenvalue with spin-weight s,
+    degree l, order m, and spheroidicity g
 
-    :param s: spin weight
-    :type s: int or half-integer float
-    :param ell: degree
-    :type ell: int or half-integer float
-    :param m: order
-    :type m: int or half-integer float
-    :param g: spheroidicity
-    :type g: double
-    :param num_terms: number of terms in the spherical expansion, automatic by default
-    :type num_terms: int
-    :param n_max: maximum number of terms in the spherical expansion, defaults to 100
-    :type n_max: int
+    Parameters
+    ----------
+    s : int or half-integer float
+        spin weight
+    ell : int or half-integer float
+        degree
+    m : int or half-integer float
+        order
+    g : double
+        spheroidicity
+    num_terms : int
+        number of terms in the spherical expansion, automatic by default
+    n_max : int
+        maximum number of terms in the spherical expansion, defaults to
+        100
 
-    :return: spin-weighted spheroidal eigenvalue :math:`{}_{s}\lambda_{lm}`
-    :rtype: double
+    Returns
+    -------
+    double
+        spin-weighted spheroidal eigenvalue :math:`{}_{s}\lambda_{lm}`
     """
     l_min = max(abs(s), abs(m))
 
@@ -44,24 +49,29 @@ def eigenvalue_spectral(s, ell, m, g, num_terms=None, n_max=100):
 
 
 def harmonic_spectral(s, ell, m, g, num_terms, n_max=100):
-    r"""
-    Computes the spin-weighted spheroidal harmonic with spin-weight s, degree l, order m, and spheroidicity g using the spherical expansion method.
+    r"""Computes the spin-weighted spheroidal harmonic with spin-weight s, 
+    degree l, order m, and spheroidicity g using the spherical expansion method.
 
-    :param s: spin weight
-    :type s: int or half-integer float
-    :param ell: degree
-    :type ell: int or half-integer float
-    :param m: order
-    :type m: int or half-integer float
-    :param g: spheroidicity
-    :type g: double
-    :param num_terms: number of terms in the expansion
-    :type num_terms: int
-    :param n_max: maximum number of terms in the expansion
-    :type n_max: int
+    Parameters
+    ----------
+    s : int or half-integer float
+        spin weight
+    ell : int or half-integer float
+        degree
+    m : int or half-integer float
+        order
+    g : double
+        spheroidicity
+    num_terms : int
+        number of terms in the expansion
+    n_max : int
+        maximum number of terms in the expansion
 
-    :return: spin-weighted spheroidal harmonic :math:`{}_{s}S_{lm}(\theta,\phi)`
-    :rtype: function
+    Returns
+    -------
+    function
+        spin-weighted spheroidal harmonic
+        :math:`{}_{s}S_{lm}(\theta,\phi)`
     """
     l_min = max(abs(s), abs(m))
     if num_terms is None:
@@ -87,22 +97,28 @@ def harmonic_spectral(s, ell, m, g, num_terms, n_max=100):
 
 
 def harmonic_spectral_deriv(s, ell, m, g, num_terms, n_max=100):
-    r"""
-    Computes the derivative with respect to theta of the spin-weighted spheroidal harmonic with spin-weight s, degree l, order m, and spheroidicity g using the spherical expansion method.
+    r"""Computes the derivative with respect to theta of the spin-weighted 
+    spheroidal harmonic with spin-weight s, degree l, order m, and spheroidicity g 
+    using the spherical expansion method.
 
-    :param s: spin weight
-    :type s: int or half-integer float
-    :param ell: degree
-    :type ell: int or half-integer float
-    :param m: order
-    :type m: int or half-integer float
-    :param g: spheroidicity
-    :type g: double
-    :param num_terms: number of terms in the expansion
-    :type num_terms: int
+    Parameters
+    ----------
+    s : int or half-integer float
+        spin weight
+    ell : int or half-integer float
+        degree
+    m : int or half-integer float
+        order
+    g : double
+        spheroidicity
+    num_terms : int
+        number of terms in the expansion
 
-    :return: derivative of the spin-weighted spheroidal harmonic :math:`\frac{d}{d\theta}\left({}_{s}S_{lm}(\theta,\phi)\right)`
-    :rtype: function
+    Returns
+    -------
+    function
+        derivative of the spin-weighted spheroidal harmonic
+        :math:`\frac{d}{d\theta}\left({}_{s}S_{lm}(\theta,\phi)\right)`
     """
     l_min = max(abs(s), abs(m))
     if num_terms is None:

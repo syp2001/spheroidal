@@ -5,20 +5,24 @@ from scipy.sparse import diags
 from scipy.linalg import eig_banded, eigvals_banded
 from numba import njit
 
-
 def sphericalY(s, l, m):
-    r"""
-    Computes the spin-weighted spherical harmonic with spin weight s, degree l, and order m.
+    r"""Computes the spin-weighted spherical harmonic with 
+    spin weight s, degree l, and order m.
 
-    :param s: spin weight
-    :type s: int or half-integer float
-    :param l: degree
-    :type l: int
-    :param m: order
-    :type m: int or half-integer float
+    Parameters
+    ----------
+    s : int or half-integer float
+        spin weight
+    l : int
+        degree
+    m : int or half-integer float
+        order
 
-    :return: spin weighted spherical harmonic function :math:`{}_{s}Y_{lm}(\theta,\phi)`
-    :rtype: function
+    Returns
+    -------
+    function
+        spin weighted spherical harmonic function
+        :math:`{}_{s}Y_{lm}(\theta,\phi)`
     """
 
     # https://en.wikipedia.org/wiki/Spin-weighted_spherical_harmonics
@@ -43,36 +47,46 @@ def sphericalY(s, l, m):
     return Y
 
 def sphericalY_numerical_deriv(s, l, m, dx=1e-5):
-    r"""
-    Computes the numerical derivative with respect to theta of the spin-weighted spherical harmonic with spin weight s, degree l, and order m.
+    r"""Computes the numerical derivative with respect to theta of the 
+    spin-weighted spherical harmonic with spin weight s, degree l, and order m.
 
-    :param s: spin weight
-    :type s: int or half-integer float
-    :param l: degree
-    :type l: int
-    :param m: order
-    :type m: int or half-integer float
+    Parameters
+    ----------
+    s : int or half-integer float
+        spin weight
+    l : int
+        degree
+    m : int or half-integer float
+        order
 
-    :return: spin weighted spherical harmonic function :math:`\frac{d{}_{s}Y_{lm}(\theta,\phi)}{d\theta}`
-    :rtype: function
+    Returns
+    -------
+    function
+        spin weighted spherical harmonic function
+        :math:`\frac{d{}_{s}Y_{lm}(\theta,\phi)}{d\theta}`
     """
     S = sphericalY(s, l, m)
     return lambda theta, phi: (S(theta + dx, phi) - S(theta, phi)) / dx
 
 
 def sphericalY_deriv(s, l, m):
-    r"""
-    Computes the derivative with respect to theta of the spin-weighted spherical harmonic with spin weight s, degree l, and order m.
+    r"""Computes the derivative with respect to theta of the 
+    spin-weighted spherical harmonic with spin weight s, degree l, and order m.
 
-    :param s: spin weight
-    :type s: int or half-integer float
-    :param l: degree
-    :type l: int
-    :param m: order
-    :type m: int or half-integer float
+    Parameters
+    ----------
+    s : int or half-integer float
+        spin weight
+    l : int
+        degree
+    m : int or half-integer float
+        order
 
-    :return: spin weighted spherical harmonic function :math:`\frac{d{}_{s}Y_{lm}(\theta,\phi)}{d\theta}`
-    :rtype: function
+    Returns
+    -------
+    function
+        spin weighted spherical harmonic function
+        :math:`\frac{d{}_{s}Y_{lm}(\theta,\phi)}{d\theta}`
     """
     # https://en.wikipedia.org/wiki/Spin-weighted_spherical_harmonics
     prefactor = (-1.0) ** (l + m - s + 0j) * sqrt(
@@ -112,19 +126,23 @@ def sphericalY_deriv(s, l, m):
 
 @njit
 def diag0(s, m, g, l):
-    """
-    Computes the main diagonal of the matrix used to compute the spherical-spheroidal mixing coefficients.
+    """Computes the main diagonal of the matrix used to compute 
+    the spherical-spheroidal mixing coefficients.
 
-    :param s: spin weight
-    :type s: int or half-integer float
-    :param m: order
-    :type m: int or half-integer float
-    :param g: spheroidicity
-    :type g: double
-    :param l: degree
-    :type l: int or half-integer float
+    Parameters
+    ----------
+    s : int or half-integer float
+        spin weight
+    m : int or half-integer float
+        order
+    g : double
+        spheroidicity
+    l : int or half-integer float
+        degree
 
-    :rtype: double
+    Returns
+    -------
+    double
     """
     if l >= 1:
         return (
@@ -148,20 +166,23 @@ def diag0(s, m, g, l):
 
 @njit
 def diag1(s, m, g, l):
-    """
-    Computes the first diagonal below the main diagonal of the matrix used to compute 
-    the spherical-spheroidal mixing coefficients.
+    """Computes the first diagonal below the main diagonal of 
+    the matrix used to compute the spherical-spheroidal mixing coefficients.
 
-    :param s: spin weight
-    :type s: int or half-integer float
-    :param m: order
-    :type m: int or half-integer float
-    :param g: spheroidicity
-    :type g: double
-    :param l: degree
-    :type l: int or half-integer float
+    Parameters
+    ----------
+    s : int or half-integer float
+        spin weight
+    m : int or half-integer float
+        order
+    g : double
+        spheroidicity
+    l : int or half-integer float
+        degree
 
-    :rtype: double
+    Returns
+    -------
+    double
     """
     if l >= 1 / 2:
         return (
@@ -181,20 +202,23 @@ def diag1(s, m, g, l):
 
 @njit
 def diag2(s, m, g, l):
-    """
-    Computes the second diagonal below the main diagonal of the matrix used to compute
-    the spherical-spheroidal mixing coefficients.
+    """Computes the second diagonal below the main diagonal of 
+    the matrix used to compute the spherical-spheroidal mixing coefficients.
 
-    :param s: spin weight
-    :type s: int or half-integer float
-    :param m: order
-    :type m: int or half-integer float
-    :param g: spheroidicity
-    :type g: double
-    :param l: degree
-    :type l: int or half-integer float
+    Parameters
+    ----------
+    s : int or half-integer float
+        spin weight
+    m : int or half-integer float
+        order
+    g : double
+        spheroidicity
+    l : int or half-integer float
+        degree
 
-    :rtype: double
+    Returns
+    -------
+    double
     """
     return (
         (-1) ** (2 * (l + m))
@@ -216,21 +240,27 @@ def diag2(s, m, g, l):
 
 @njit
 def spectral_matrix_bands(s, m, g, num_terms):
-    """
-    Returns the diagonal bands of the matrix used to compute the spherical-spheroidal mixing coefficients.
+    """Returns the diagonal bands of the matrix used to compute 
+    the spherical-spheroidal mixing coefficients.
 
-    :param s: spin weight
-    :type s: int or half-integer float
-    :param m: order
-    :type m: int or half-integer float
-    :param g: spheroidicity
-    :type g: double
-    :param num_terms: dimension of matrix
-    :type num_terms: int
-    :param offset: index along the main diagonal at which to start computing terms
-    :type offset: int
+    Parameters
+    ----------
+    s : int or half-integer float
+        spin weight
+    m : int or half-integer float
+        order
+    g : double
+        spheroidicity
+    num_terms : int
+        dimension of matrix
+    offset : int
+        index along the main diagonal at which to start computing terms
 
-    :return: array of shape (3,num_terms) containing the main diagonal of the matrix followed by the two diagonals below it
+    Returns
+    -------
+    unknown
+        array of shape (3,num_terms) containing the main diagonal of the
+        matrix followed by the two diagonals below it
     """
     l_min = max(abs(s), abs(m))
     bands = np.zeros((3, num_terms))
@@ -245,17 +275,19 @@ def spectral_matrix_bands(s, m, g, num_terms):
 
 @njit
 def spectral_matrix_complex(s, m, g, order):
-    """
-    Returns the matrix used to compute the spherical-spheroidal mixing coefficients
+    """Returns the matrix used to compute the spherical-spheroidal 
+    mixing coefficients.
 
-    :param s: spin weight
-    :type s: int or half-integer float
-    :param m: order
-    :type m: int or half-integer float
-    :param g: spheroidicity
-    :type g: double
-    :param order: dimension of matrix
-    :type order: int
+    Parameters
+    ----------
+    s : int or half-integer float
+        spin weight
+    m : int or half-integer float
+        order
+    g : double
+        spheroidicity
+    order : int
+        dimension of matrix
     """
     l_min = max(abs(s), abs(m))
     matrix = np.zeros((order, order),dtype=np.cdouble)
@@ -273,20 +305,25 @@ def spectral_matrix_complex(s, m, g, order):
     return matrix
 
 def separation_constants(s,m,g,num_terms):
-    """
-    Computes the angular separation constants up to the specified number of terms
+    """Computes the angular separation constants 
+    up to the specified number of terms.
 
-   :param s: spin weight
-    :type s: int or half-integer float
-    :param m: order
-    :type m: int or half-integer float
-    :param g: spheroidicity
-    :type g: double
-    :param num_terms: number of terms to compute
-    :type num_terms: int
+       :param s: spin weight
 
-    :return: array of separation constants in ascending order
-    :rtype: numpy.ndarray
+    Parameters
+    ----------
+    s : int or half-integer float
+    m : int or half-integer float
+        order
+    g : double
+        spheroidicity
+    num_terms : int
+        number of terms to compute
+
+    Returns
+    -------
+    numpy.ndarray
+        array of separation constants in ascending order
     """
     if np.iscomplex(g):
         matrix = spectral_matrix_complex(s, m, g, num_terms)
@@ -297,34 +334,42 @@ def separation_constants(s,m,g,num_terms):
 
 
 def mixing_coefficients(s, ell, m, g, num_terms):
-    """
-    Computes the spherical-spheroidal mixing coefficients up to the specified number of terms
+    """Computes the spherical-spheroidal mixing coefficients 
+    up to the specified number of terms
 
-    :param s: spin weight
-    :type s: int or half-integer float
-    :param m: order
-    :type m: int or half-integer float
-    :param g: spheroidicity
-    :type g: double
-    :param num_terms: number of terms in the expansion
-    :type num_terms: int
+    Parameters
+    ----------
+    s : int or half-integer float
+        spin weight
+    m : int or half-integer float
+        order
+    g : double
+        spheroidicity
+    num_terms : int
+        number of terms in the expansion
 
-    :return: array of mixing coefficients
-    :rtype: numpy.ndarray
+    Returns
+    -------
+    numpy.ndarray
+        array of mixing coefficients
     """
     l_min = max(abs(s), abs(m))
 
+    # if g is complex, use full matrix
     if np.iscomplex(g):
         matrix = spectral_matrix_complex(s, m, g, num_terms)
         w, v = np.linalg.eig(matrix)
         v = np.transpose(v)
         v = v[np.argsort(abs(w))]
+        
         return v[int(ell - l_min)]
+    # if g is real, matrix is symmetric, so eig_banded can be used
     else:
         bands = spectral_matrix_bands(s, m, g, num_terms)
 
         eigs_output = eig_banded(bands, lower=True)
-        # eig_banded returns the separation constants in ascending order, so eigenvectors are sorted by decreasing spheroidal eigenvalue
+        # eig_banded returns the separation constants in ascending order
+        # so eigenvectors are sorted by decreasing spheroidal eigenvalue
         eigenvectors = np.transpose(eigs_output[1])
 
         # enforce sign convention that ell=l mode is positive
