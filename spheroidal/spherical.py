@@ -1,9 +1,30 @@
+"""Module containing functions for computing spin weighted spherical harmonics and spherical-spheroidal mixing coefficients."""
 import numpy as np
 from scipy.special import factorial, binom
-from numpy import sqrt, sin, cos, tan, exp, pi
-from scipy.sparse import diags
+from numpy import sqrt, sin, cos, exp, pi
 from scipy.linalg import eig_banded, eigvals_banded
 from numba import njit
+
+def sphericalY_eigenvalue(s, l, m):
+    """
+    Computes the eigenvalue of the spin-weighted spherical harmonic with 
+    spin weight s, degree l, and order m.
+
+    Parameters
+    ----------
+    s : int or half-integer float
+        spin weight
+    l : int
+        degree
+    m : int or half-integer float
+        order
+
+    Returns
+    -------
+    double
+        eigenvalue of the spin-weighted spherical harmonic
+    """
+    return l * (l + 1) - s * (s + 1)
 
 def sphericalY(s, l, m):
     r"""Computes the spin-weighted spherical harmonic with 
@@ -110,6 +131,8 @@ def sphericalY_numerical_deriv(s, l, m, dx=1e-5):
         degree
     m : int or half-integer float
         order
+    dx : double
+        step size for numerical derivative
 
     Returns
     -------
@@ -128,7 +151,7 @@ def sphericalY_deriv2(s, ell, m):
     ----------
     s : int or half-integer float
         spin weight
-    l : int
+    ell : int
         degree
     m : int or half-integer float
         order
@@ -153,7 +176,7 @@ def sphericalY_deriv2(s, ell, m):
     return dS2
 
 @njit
-def diag0(s, m, g, l):
+def _diag0(s, m, g, l):
     """Computes the main diagonal of the matrix used to compute 
     the spherical-spheroidal mixing coefficients.
 
@@ -163,7 +186,7 @@ def diag0(s, m, g, l):
         spin weight
     m : int or half-integer float
         order
-    g : double
+    g : complex
         spheroidicity
     l : int or half-integer float
         degree
@@ -193,7 +216,7 @@ def diag0(s, m, g, l):
 
 
 @njit
-def diag1(s, m, g, l):
+def _diag1(s, m, g, l):
     """Computes the first diagonal below the main diagonal of 
     the matrix used to compute the spherical-spheroidal mixing coefficients.
 
@@ -203,7 +226,7 @@ def diag1(s, m, g, l):
         spin weight
     m : int or half-integer float
         order
-    g : double
+    g : complex
         spheroidicity
     l : int or half-integer float
         degree
@@ -229,7 +252,7 @@ def diag1(s, m, g, l):
 
 
 @njit
-def diag2(s, m, g, l):
+def _diag2(s, m, g, l):
     """Computes the second diagonal below the main diagonal of 
     the matrix used to compute the spherical-spheroidal mixing coefficients.
 
@@ -239,7 +262,7 @@ def diag2(s, m, g, l):
         spin weight
     m : int or half-integer float
         order
-    g : double
+    g : complex
         spheroidicity
     l : int or half-integer float
         degree
@@ -277,7 +300,7 @@ def spectral_matrix_bands(s, m, g, num_terms):
         spin weight
     m : int or half-integer float
         order
-    g : double
+    g : complex
         spheroidicity
     num_terms : int
         dimension of matrix
@@ -293,11 +316,11 @@ def spectral_matrix_bands(s, m, g, num_terms):
     l_min = max(abs(s), abs(m))
     bands = np.zeros((3, num_terms))
     for i in range(0, num_terms):
-        bands[0, i] = diag0(s, m, g, i + l_min)
+        bands[0, i] = _diag0(s, m, g, i + l_min)
     for i in range(0, num_terms ):
-        bands[1, i] = diag1(s, m, g, i + l_min)
+        bands[1, i] = _diag1(s, m, g, i + l_min)
     for i in range(0, num_terms ):
-        bands[2, i] = diag2(s, m, g, i + l_min)
+        bands[2, i] = _diag2(s, m, g, i + l_min)
     
     return bands
 
@@ -312,7 +335,7 @@ def spectral_matrix_complex(s, m, g, order):
         spin weight
     m : int or half-integer float
         order
-    g : double
+    g : complex
         spheroidicity
     order : int
         dimension of matrix
@@ -321,29 +344,28 @@ def spectral_matrix_complex(s, m, g, order):
     matrix = np.zeros((order, order),dtype=np.cdouble)
     # fill main diagonal
     for i in range(0, order):
-        matrix[i, i] = diag0(s, m, g, i + l_min)
+        matrix[i, i] = _diag0(s, m, g, i + l_min)
     # fill diagonals above and below main diagonal
     for i in range(0, order - 1):
-        matrix[i, i + 1] = diag1(s, m, g, i + l_min)
-        matrix[i + 1, i] = diag1(s, m, g, i + l_min)
+        matrix[i, i + 1] = _diag1(s, m, g, i + l_min)
+        matrix[i + 1, i] = _diag1(s, m, g, i + l_min)
     # fill diagonals two below and above main diagonal
     for i in range(0, order - 2):
-        matrix[i, i + 2] = diag2(s, m, g, i + l_min)
-        matrix[i + 2, i] = diag2(s, m, g, i + l_min)
+        matrix[i, i + 2] = _diag2(s, m, g, i + l_min)
+        matrix[i + 2, i] = _diag2(s, m, g, i + l_min)
     return matrix
 
 def separation_constants(s,m,g,num_terms):
     """Computes the angular separation constants 
     up to the specified number of terms.
 
-       :param s: spin weight
-
     Parameters
     ----------
     s : int or half-integer float
+        spin weight
     m : int or half-integer float
         order
-    g : double
+    g : complex
         spheroidicity
     num_terms : int
         number of terms to compute
@@ -357,6 +379,7 @@ def separation_constants(s,m,g,num_terms):
         matrix = spectral_matrix_complex(s, m, g, num_terms)
         return sorted(np.linalg.eigvals(matrix),key=abs,reverse=True)
     else:
+        g = np.real_if_close(g)
         matrix_bands = spectral_matrix_bands(s, m, g, num_terms)
         return eigvals_banded(a_band=matrix_bands, lower=True)
 
@@ -371,7 +394,7 @@ def mixing_coefficients(s, ell, m, g, num_terms):
         spin weight
     m : int or half-integer float
         order
-    g : double
+    g : complex
         spheroidicity
     num_terms : int
         number of terms in the expansion
@@ -393,6 +416,7 @@ def mixing_coefficients(s, ell, m, g, num_terms):
         return v[int(ell - l_min)]
     # if g is real, matrix is symmetric, so eig_banded can be used
     else:
+        g = np.real_if_close(g)
         bands = spectral_matrix_bands(s, m, g, num_terms)
 
         eigs_output = eig_banded(bands, lower=True)

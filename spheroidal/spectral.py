@@ -1,6 +1,5 @@
+"""Module containing functions for computing spin-weighted spheroidal harmonics using the spherical expansion method."""
 from .spherical import *
-from scipy.linalg import eigvals_banded
-
 
 def eigenvalue_spectral(s, ell, m, g, num_terms=None, n_max=100):
     """Computes the spin-weighted spheroidal eigenvalue with spin-weight s,
@@ -14,7 +13,7 @@ def eigenvalue_spectral(s, ell, m, g, num_terms=None, n_max=100):
         degree
     m : int or half-integer float
         order
-    g : double
+    g : complex
         spheroidicity
     num_terms : int
         number of terms in the spherical expansion, automatic by default
@@ -60,7 +59,7 @@ def harmonic_spectral(s, ell, m, g, num_terms, n_max=100):
         degree
     m : int or half-integer float
         order
-    g : double
+    g : complex
         spheroidicity
     num_terms : int
         number of terms in the expansion
@@ -109,7 +108,7 @@ def harmonic_spectral_deriv(s, ell, m, g, num_terms, n_max=100):
         degree
     m : int or half-integer float
         order
-    g : double
+    g : complex
         spheroidicity
     num_terms : int
         number of terms in the expansion
@@ -154,7 +153,7 @@ def harmonic_spectral_deriv2(s, ell, m, g, num_terms, n_max=100):
         degree
     m : int or half-integer float
         order
-    g : double
+    g : complex
         spheroidicity
     num_terms : int
         number of terms in the expansion

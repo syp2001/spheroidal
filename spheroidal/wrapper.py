@@ -1,3 +1,5 @@
+"""Module containing wrapper functions for computing spin-weighted spheroidal harmonics 
+along with their  eigenvalues and derivatives."""
 from .spherical import *
 from .leaver import *
 from .spectral import *
@@ -12,7 +14,8 @@ def eigenvalue(s, ell, m, g, method="spectral", num_terms=None, n_max=100):
     * "spectral" (default): uses the spherical expansion method described in Appendix A of 
         `(Hughes, 2000) <https://journals.aps.org/prd/pdf/10.1103/PhysRevD.61.084004>`_
     * "leaver": uses the continued fraction method described in 
-        `(Leaver, 1985) <https://www.edleaver.com/Misc/EdLeaver/Publications/AnalyticRepresentationForQuasinormalModesOfKerrBlackHoles.pdf>`_
+        `(Leaver, 1985) <https://www.edleaver.com/Misc/EdLeaver/Publications/Analytic
+        RepresentationForQuasinormalModesOfKerrBlackHoles.pdf>`_
 
     Parameters
     ----------
@@ -22,7 +25,7 @@ def eigenvalue(s, ell, m, g, method="spectral", num_terms=None, n_max=100):
         degree
     m : int or half-integer float
         order
-    g : double
+    g : complex
         spheroidicity
     method : str, optional
         method used to compute the eigenvalue (options are "spectral"
@@ -49,16 +52,17 @@ def eigenvalue(s, ell, m, g, method="spectral", num_terms=None, n_max=100):
     raise ValueError("Invalid method: {}".format(method))
 
 
-def harmonic(s, ell, m, g, method="spectral", num_terms=None, n_max=100):
+def harmonic(s, ell, m, g, method="leaver", num_terms=None, n_max=100):
     r"""Computes the spin-weighted spheroidal harmonic with spin-weight s, 
     degree l, order m, and spheroidicity g.
 
     Supported methods:
 
-    * "spectral" (default): spherical expansion method described in Appendix A of 
+    * "spectral": spherical expansion method described in Appendix A of 
         `(Hughes, 2000) <https://journals.aps.org/prd/pdf/10.1103/PhysRevD.61.084004>`_
-    * "leaver": continued fraction method described in 
-        `(Leaver, 1985) <https://www.edleaver.com/Misc/EdLeaver/Publications/AnalyticRepresentationForQuasinormalModesOfKerrBlackHoles.pdf>`_
+    * "leaver" (default): continued fraction method described in 
+        `(Leaver, 1985) <https://www.edleaver.com/Misc/EdLeaver/Publications/Analytic
+        RepresentationForQuasinormalModesOfKerrBlackHoles.pdf>`_
 
     Parameters
     ----------
@@ -68,11 +72,11 @@ def harmonic(s, ell, m, g, method="spectral", num_terms=None, n_max=100):
         degree
     m : int or half-integer float
         order
-    g : double
+    g : complex
         spheroidicity
     method : str, optional
         method used to compute the harmonic (options are "spectral" and
-        "leaver"), defaults to "spectral"
+        "leaver"), defaults to "leaver"
     num_terms : int, optional
         number of terms used in the expansion, automatic by default
     n_max : int, optional
@@ -105,7 +109,8 @@ def harmonic_deriv(s, ell, m, g, n_theta = 1, n_phi = 0, method="spectral", num_
     * "spectral" (default): uses the spherical expansion method described in Appendix A of 
         `(Hughes, 2000) <https://journals.aps.org/prd/pdf/10.1103/PhysRevD.61.084004>`_
     * "leaver": uses the continued fraction method described in 
-        `(Leaver, 1985) <https://www.edleaver.com/Misc/EdLeaver/Publications/AnalyticRepresentationForQuasinormalModesOfKerrBlackHoles.pdf>`_
+        `(Leaver, 1985) <https://www.edleaver.com/Misc/EdLeaver/Publications/Analytic
+        RepresentationForQuasinormalModesOfKerrBlackHoles.pdf>`_
 
     Parameters
     ----------
@@ -115,7 +120,7 @@ def harmonic_deriv(s, ell, m, g, n_theta = 1, n_phi = 0, method="spectral", num_
         degree
     m : int or half-integer float
         order
-    g : double
+    g : complex
         spheroidicity
     method : str, optional
         method used to compute the harmonic, defaults to "spectral"
