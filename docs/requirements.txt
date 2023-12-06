@@ -2,6 +2,6 @@ ipython
 sphinx
 scipy
 numpy
-spherical
-sphinx-book-theme
+numba
+furo
 myst-nb
