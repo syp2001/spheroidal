@@ -4,7 +4,6 @@ from .spectral import *
 import numpy as np
 from scipy.optimize import newton
 from scipy import special
-import scipy
 from numpy.polynomial import Polynomial
 from numba import njit
 
@@ -13,7 +12,7 @@ from numba import njit
 def continued_fraction(A, s, ell, m, g, n_max=100):
     """Evaluates the continued fraction in equation 21 of
     `(Leaver, 1985) <https://www.edleaver.com/Misc/EdLeaver/Publications/Analytic
-    RepresentationForQuasinormalModesOfKerrBlackHoles.pdf>`_ until it converges 
+    RepresentationForQuasinormalModesOfKerrBlackHoles.pdf>`_ until it converges
     to machine precision using the modified version of Lentz's method described in
     `<https://duetosymmetry.com/notes/take-derivative-continued-fraction/>`_.
 
@@ -73,8 +72,8 @@ def continued_fraction(A, s, ell, m, g, n_max=100):
 def continued_fraction_deriv(A, s, ell, m, g, n_max=100):
     """Evaluates the derivative of the continued fraction in equation 21 of
     `(Leaver, 1985) <https://www.edleaver.com/Misc/EdLeaver/Publications/Analytic
-    RepresentationForQuasinormalModesOfKerrBlackHoles.pdf>`_ until it converges 
-    to machine precision using automatic differentiation of Lentz's method as 
+    RepresentationForQuasinormalModesOfKerrBlackHoles.pdf>`_ until it converges
+    to machine precision using automatic differentiation of Lentz's method as
     described in `<https://duetosymmetry.com/notes/take-derivative-continued-fraction/>`_.
 
     Parameters
@@ -164,7 +163,10 @@ def eigenvalue_leaver(s, ell, m, g):
     # compute eigenvalue using root finding with newton's method
     return (
         newton(
-            continued_fraction, args=(s, ell, m, g), x0=spectral_A, fprime=continued_fraction_deriv
+            continued_fraction,
+            args=(s, ell, m, g),
+            x0=spectral_A,
+            fprime=continued_fraction_deriv,
         )
         + g**2
         - 2 * m * g
@@ -202,7 +204,9 @@ def leaver_coefficients(s, ell, m, g, num_terms=None, n_max=100):
         g = np.real_if_close(g)
         a = np.zeros(n_max)
 
-    A = eigenvalue_spectral(s, ell, m, g) - g**2 + 2 * m * g  # angular separation constant
+    A = (
+        eigenvalue_spectral(s, ell, m, g) - g**2 + 2 * m * g
+    )  # angular separation constant
 
     k1 = 1 / 2 * abs(m - s)
     k2 = 1 / 2 * abs(m + s)
@@ -229,7 +233,11 @@ def leaver_coefficients(s, ell, m, g, num_terms=None, n_max=100):
         n = i + 1  # track number of terms that have been computed
         # recursion relation for a_i
         if i > 1:
-            a[i] = -1 / alpha(i - 1) * (beta(i - 1, A) * a[i - 1] + gamma(i - 1) * a[i - 2])
+            a[i] = (
+                -1
+                / alpha(i - 1)
+                * (beta(i - 1, A) * a[i - 1] + gamma(i - 1) * a[i - 2])
+            )
 
         # normterm comes from Integrate[Exp[(g + Conjugate[g])*(x - 1)]*x^(2*k1)*(2 - x)^(2*k2)*(c*x^i), {x, 0, 2}]
         # c = \sum_0^i a_j^* a_{i-j} is the coefficient of x^i in (\sum_0^i a_j x^j)^*(\sum_0^i a_j x^j) and x = 1+u = 1+cos(theta)
@@ -308,7 +316,13 @@ def harmonic_leaver(s, ell, m, g, num_terms=None, n_max=100):
     def Sslm(theta, phi):
         u = np.cos(theta)
         basis = [(1 + u) ** n for n in range(len(a))]
-        return np.exp(g * u) * (1 + u) ** k1 * (1 - u) ** k2 * a.dot(basis) * np.exp(1j * m * phi)
+        return (
+            np.exp(g * u)
+            * (1 + u) ** k1
+            * (1 - u) ** k2
+            * a.dot(basis)
+            * np.exp(1j * m * phi)
+        )
 
     return Sslm
 
@@ -354,7 +368,11 @@ def harmonic_leaver_deriv(s, ell, m, g, num_terms=None, n_max=100):
         # f[theta_] := E^(g Cos[theta]) (1 + Cos[theta])^(k1) (1 - Cos[theta])^(k2)
         # Simplify[f'[theta], Assumptions -> Element[2 k1 | 2 k2, Integers]]
         return (
-            -np.sin(theta) * np.exp(g * u) * (1 + u) ** k1 * (1 - u) ** k2 * series_deriv(1 + u)
+            -np.sin(theta)
+            * np.exp(g * u)
+            * (1 + u) ** k1
+            * (1 - u) ** k2
+            * series_deriv(1 + u)
             + np.exp(g * cos(theta))
             * (1 - cos(theta)) ** k2
             * (1 + cos(theta)) ** k1

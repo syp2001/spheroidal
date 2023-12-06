@@ -5,9 +5,10 @@ from numpy import sqrt, sin, cos, exp, pi
 from scipy.linalg import eig_banded, eigvals_banded
 from numba import njit
 
+
 def sphericalY_eigenvalue(s, l, m):
     """
-    Computes the eigenvalue of the spin-weighted spherical harmonic with 
+    Computes the eigenvalue of the spin-weighted spherical harmonic with
     spin weight s, degree l, and order m.
 
     Parameters
@@ -26,8 +27,9 @@ def sphericalY_eigenvalue(s, l, m):
     """
     return l * (l + 1) - s * (s + 1)
 
+
 def sphericalY(s, l, m):
-    r"""Computes the spin-weighted spherical harmonic with 
+    r"""Computes the spin-weighted spherical harmonic with
     spin weight s, degree l, and order m.
 
     Parameters
@@ -60,14 +62,17 @@ def sphericalY(s, l, m):
         for r in range(int(max(m - s, 0)), int(min(l - s, l + m) + 1)):
             alternating_sum = alternating_sum + (-1) ** r * binom(l - s, r) * binom(
                 l + s, r + s - m
-            ) * sin(theta / 2) ** (2 * l - 2 * r - s + m) * cos(theta / 2) ** (2 * r + s - m)
+            ) * sin(theta / 2) ** (2 * l - 2 * r - s + m) * cos(theta / 2) ** (
+                2 * r + s - m
+            )
 
         return prefactor * exp(1j * m * phi) * alternating_sum
 
     return Y
 
+
 def sphericalY_deriv(s, l, m):
-    r"""Computes the derivative with respect to theta of the 
+    r"""Computes the derivative with respect to theta of the
     spin-weighted spherical harmonic with spin weight s, degree l, and order m.
 
     Parameters
@@ -115,12 +120,17 @@ def sphericalY_deriv(s, l, m):
                 2 * r + s - m + 1
             )
 
-        return prefactor * (l * alternating_sum + alternating_sum_deriv) * exp(1j * m * phi)
+        return (
+            prefactor
+            * (l * alternating_sum + alternating_sum_deriv)
+            * exp(1j * m * phi)
+        )
 
     return dY
 
+
 def sphericalY_deriv2(s, ell, m):
-    r"""Computes the second derivative with respect to theta of the 
+    r"""Computes the second derivative with respect to theta of the
     spin-weighted spherical harmonic with spin weight s, degree l, and order m.
 
     Parameters
@@ -144,16 +154,18 @@ def sphericalY_deriv2(s, ell, m):
 
     def dS2(theta, phi):
         return (
-            + (m + s * cos(theta)) ** 2 / sin(theta) ** 2
+            +((m + s * cos(theta)) ** 2) / sin(theta) ** 2
             - s
-            - ell * (ell + 1) + s * (s + 1)
+            - ell * (ell + 1)
+            + s * (s + 1)
         ) * S(theta, phi) - cos(theta) / sin(theta) * dS(theta, phi)
 
     return dS2
 
+
 @njit
 def _diag0(s, m, g, l):
-    """Computes the main diagonal of the matrix used to compute 
+    """Computes the main diagonal of the matrix used to compute
     the spherical-spheroidal mixing coefficients.
 
     Parameters
@@ -193,7 +205,7 @@ def _diag0(s, m, g, l):
 
 @njit
 def _diag1(s, m, g, l):
-    """Computes the first diagonal below the main diagonal of 
+    """Computes the first diagonal below the main diagonal of
     the matrix used to compute the spherical-spheroidal mixing coefficients.
 
     Parameters
@@ -219,17 +231,23 @@ def _diag1(s, m, g, l):
             * (2 * l + l**2 + g * m)
             * s
             * sqrt(
-                ((1 + 2 * l) * (1 + 2 * l + l**2 - m**2) * (1 + 2 * l + l**2 - s**2))
+                (
+                    (1 + 2 * l)
+                    * (1 + 2 * l + l**2 - m**2)
+                    * (1 + 2 * l + l**2 - s**2)
+                )
                 / (3 + 2 * l)
             )
         ) / (l * (2 + l) * (1 + 3 * l + 2 * l**2))
     if l == 0:
-        return (-2 * (-1) ** (2 * m) * g * s * sqrt((1 - m**2) * (1 - s**2))) / sqrt(3)
+        return (
+            -2 * (-1) ** (2 * m) * g * s * sqrt((1 - m**2) * (1 - s**2))
+        ) / sqrt(3)
 
 
 @njit
 def _diag2(s, m, g, l):
-    """Computes the second diagonal below the main diagonal of 
+    """Computes the second diagonal below the main diagonal of
     the matrix used to compute the spherical-spheroidal mixing coefficients.
 
     Parameters
@@ -261,13 +279,20 @@ def _diag2(s, m, g, l):
                 * (1 + l + s)
                 * (2 + l + s)
             )
-            / ((1 + l) ** 2 * (2 + l) ** 2 * (1 + 2 * l) * (3 + 2 * l) ** 2 * (5 + 2 * l))
+            / (
+                (1 + l) ** 2
+                * (2 + l) ** 2
+                * (1 + 2 * l)
+                * (3 + 2 * l) ** 2
+                * (5 + 2 * l)
+            )
         )
     )
 
+
 @njit
 def spectral_matrix_bands(s, m, g, num_terms):
-    """Returns the diagonal bands of the matrix used to compute 
+    """Returns the diagonal bands of the matrix used to compute
     the spherical-spheroidal mixing coefficients.
 
     Parameters
@@ -293,16 +318,17 @@ def spectral_matrix_bands(s, m, g, num_terms):
     bands = np.zeros((3, num_terms))
     for i in range(0, num_terms):
         bands[0, i] = _diag0(s, m, g, i + l_min)
-    for i in range(0, num_terms ):
+    for i in range(0, num_terms):
         bands[1, i] = _diag1(s, m, g, i + l_min)
-    for i in range(0, num_terms ):
+    for i in range(0, num_terms):
         bands[2, i] = _diag2(s, m, g, i + l_min)
-    
+
     return bands
+
 
 @njit
 def spectral_matrix_complex(s, m, g, order):
-    """Returns the matrix used to compute the spherical-spheroidal 
+    """Returns the matrix used to compute the spherical-spheroidal
     mixing coefficients.
 
     Parameters
@@ -317,7 +343,7 @@ def spectral_matrix_complex(s, m, g, order):
         dimension of matrix
     """
     l_min = max(abs(s), abs(m))
-    matrix = np.zeros((order, order),dtype=np.cdouble)
+    matrix = np.zeros((order, order), dtype=np.cdouble)
     # fill main diagonal
     for i in range(0, order):
         matrix[i, i] = _diag0(s, m, g, i + l_min)
@@ -331,8 +357,9 @@ def spectral_matrix_complex(s, m, g, order):
         matrix[i + 2, i] = _diag2(s, m, g, i + l_min)
     return matrix
 
-def separation_constants(s,m,g,num_terms):
-    """Computes the angular separation constants 
+
+def separation_constants(s, m, g, num_terms):
+    """Computes the angular separation constants
     up to the specified number of terms.
 
     Parameters
@@ -353,7 +380,7 @@ def separation_constants(s,m,g,num_terms):
     """
     if np.iscomplex(g):
         matrix = spectral_matrix_complex(s, m, g, num_terms)
-        return sorted(np.linalg.eigvals(matrix),key=abs,reverse=True)
+        return sorted(np.linalg.eigvals(matrix), key=abs, reverse=True)
     else:
         g = np.real_if_close(g)
         matrix_bands = spectral_matrix_bands(s, m, g, num_terms)
@@ -361,7 +388,7 @@ def separation_constants(s,m,g,num_terms):
 
 
 def mixing_coefficients(s, ell, m, g, num_terms):
-    """Computes the spherical-spheroidal mixing coefficients 
+    """Computes the spherical-spheroidal mixing coefficients
     up to the specified number of terms
 
     Parameters

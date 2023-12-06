@@ -1,6 +1,7 @@
 """Module containing functions for computing spin-weighted spheroidal harmonics using the spherical expansion method."""
 from .spherical import *
 
+
 def eigenvalue_spectral(s, ell, m, g, num_terms=None, n_max=100):
     """Computes the spin-weighted spheroidal eigenvalue with spin-weight s,
     degree l, order m, and spheroidicity g
@@ -29,10 +30,14 @@ def eigenvalue_spectral(s, ell, m, g, num_terms=None, n_max=100):
     l_min = max(abs(s), abs(m))
 
     if num_terms is None:
-        prev_sep_const = separation_constants(s, m, g, num_terms=10)[9 - int(ell - l_min)]
+        prev_sep_const = separation_constants(s, m, g, num_terms=10)[
+            9 - int(ell - l_min)
+        ]
 
         for i in range(20, n_max, 10):
-            sep_const = separation_constants(s, m, g, num_terms=i)[i - 1 - int(ell - l_min)]
+            sep_const = separation_constants(s, m, g, num_terms=i)[
+                i - 1 - int(ell - l_min)
+            ]
             # return eigenvalue once machine precision is reached
             if sep_const == prev_sep_const:
                 return -sep_const - s * (s + 1) + g**2 - 2 * m * g
@@ -140,9 +145,10 @@ def harmonic_spectral_deriv(s, ell, m, g, num_terms, n_max=100):
 
     return dS
 
+
 def harmonic_spectral_deriv2(s, ell, m, g, num_terms, n_max=100):
-    r"""Computes the second derivative with respect to theta of the spin-weighted 
-    spheroidal harmonic with spin-weight s, degree l, order m, and 
+    r"""Computes the second derivative with respect to theta of the spin-weighted
+    spheroidal harmonic with spin-weight s, degree l, order m, and
     spheroidicity g using the spherical expansion method.
 
     Parameters

@@ -3,17 +3,17 @@ along with their  eigenvalues and derivatives."""
 from .spherical import *
 from .leaver import *
 from .spectral import *
-import numpy as np
+
 
 def eigenvalue(s, ell, m, g, method="spectral", num_terms=None, n_max=100):
-    """Computes the spin-weighted spheroidal eigenvalue with spin-weight s, 
+    """Computes the spin-weighted spheroidal eigenvalue with spin-weight s,
     degree l, order m, and spheroidicity g.
 
     Supported methods:
 
-    * "spectral" (default): uses the spherical expansion method described in Appendix A of 
+    * "spectral" (default): uses the spherical expansion method described in Appendix A of
         `(Hughes, 2000) <https://journals.aps.org/prd/pdf/10.1103/PhysRevD.61.084004>`_
-    * "leaver": uses the continued fraction method described in 
+    * "leaver": uses the continued fraction method described in
         `(Leaver, 1985) <https://www.edleaver.com/Misc/EdLeaver/Publications/Analytic
         RepresentationForQuasinormalModesOfKerrBlackHoles.pdf>`_
 
@@ -53,14 +53,14 @@ def eigenvalue(s, ell, m, g, method="spectral", num_terms=None, n_max=100):
 
 
 def harmonic(s, ell, m, g, method="leaver", num_terms=None, n_max=100):
-    r"""Computes the spin-weighted spheroidal harmonic with spin-weight s, 
+    r"""Computes the spin-weighted spheroidal harmonic with spin-weight s,
     degree l, order m, and spheroidicity g.
 
     Supported methods:
 
-    * "spectral": spherical expansion method described in Appendix A of 
+    * "spectral": spherical expansion method described in Appendix A of
         `(Hughes, 2000) <https://journals.aps.org/prd/pdf/10.1103/PhysRevD.61.084004>`_
-    * "leaver" (default): continued fraction method described in 
+    * "leaver" (default): continued fraction method described in
         `(Leaver, 1985) <https://www.edleaver.com/Misc/EdLeaver/Publications/Analytic
         RepresentationForQuasinormalModesOfKerrBlackHoles.pdf>`_
 
@@ -100,15 +100,17 @@ def harmonic(s, ell, m, g, method="leaver", num_terms=None, n_max=100):
     raise ValueError("Invalid method: {}".format(method))
 
 
-def harmonic_deriv(s, ell, m, g, n_theta = 1, n_phi = 0, method="spectral", num_terms=None, n_max=100):
-    r"""Computes the derivative with respect of theta of the spin-weighted spheroidal harmonic 
+def harmonic_deriv(
+    s, ell, m, g, n_theta=1, n_phi=0, method="spectral", num_terms=None, n_max=100
+):
+    r"""Computes the derivative with respect of theta of the spin-weighted spheroidal harmonic
     with spin-weight s, degree l, order m, and spheroidicity g.
 
     Supported methods:
 
-    * "spectral" (default): uses the spherical expansion method described in Appendix A of 
+    * "spectral" (default): uses the spherical expansion method described in Appendix A of
         `(Hughes, 2000) <https://journals.aps.org/prd/pdf/10.1103/PhysRevD.61.084004>`_
-    * "leaver": uses the continued fraction method described in 
+    * "leaver": uses the continued fraction method described in
         `(Leaver, 1985) <https://www.edleaver.com/Misc/EdLeaver/Publications/Analytic
         RepresentationForQuasinormalModesOfKerrBlackHoles.pdf>`_
 
@@ -140,24 +142,24 @@ def harmonic_deriv(s, ell, m, g, n_theta = 1, n_phi = 0, method="spectral", num_
         :math:`\frac{d}{d\theta}\left({}_{s}S_{lm}(\theta,\phi)\right)`
     """
     if n_theta == 0:
-        dS_theta =  harmonic(s, ell, m, g, method, num_terms, n_max)
+        dS_theta = harmonic(s, ell, m, g, method, num_terms, n_max)
     if n_theta == 1:
         if g == 0:
-            dS_theta =  sphericalY_deriv(s, ell, m)
+            dS_theta = sphericalY_deriv(s, ell, m)
         elif method == "leaver":
-            dS_theta =  harmonic_leaver_deriv(s, ell, m, g, num_terms, n_max)
+            dS_theta = harmonic_leaver_deriv(s, ell, m, g, num_terms, n_max)
         elif method == "spectral":
-            dS_theta =  harmonic_spectral_deriv(s, ell, m, g, num_terms, n_max)
+            dS_theta = harmonic_spectral_deriv(s, ell, m, g, num_terms, n_max)
         else:
-            raise ValueError("Invalid method: \"{}\"".format(method))
+            raise ValueError('Invalid method: "{}"'.format(method))
     if n_theta == 2:
         if g == 0:
-            dS_theta =  sphericalY_deriv2(s, ell, m)
+            dS_theta = sphericalY_deriv2(s, ell, m)
         elif method == "leaver":
-            dS_theta =  harmonic_leaver_deriv2(s, ell, m, g, num_terms, n_max)
+            dS_theta = harmonic_leaver_deriv2(s, ell, m, g, num_terms, n_max)
         elif method == "spectral":
-            dS_theta =  harmonic_spectral_deriv2(s, ell, m, g, num_terms, n_max)
+            dS_theta = harmonic_spectral_deriv2(s, ell, m, g, num_terms, n_max)
         else:
-            raise ValueError("Invalid method: \"{}\"".format(method))
-    
-    return lambda theta, phi: dS_theta(theta, phi) * (m*1j)**n_phi
+            raise ValueError('Invalid method: "{}"'.format(method))
+
+    return lambda theta, phi: dS_theta(theta, phi) * (m * 1j) ** n_phi
