@@ -1,23 +1,6 @@
 ﻿sphericalY
 ==========
 
-.. automodule:: spheroidal.spherical.sphericalY
-  
-   
-   
-   
+.. currentmodule:: spheroidal.spherical
 
-   
-   
-   
-
-   
-   
-   
-
-   
-   
-   
-
-
-
+.. autofunction:: sphericalY

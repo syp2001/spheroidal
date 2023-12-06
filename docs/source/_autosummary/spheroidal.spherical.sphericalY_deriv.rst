@@ -1,23 +1,6 @@
-﻿sphericalY\_deriv
+sphericalY\_deriv
 =================
 
-.. automodule:: spheroidal.spherical.sphericalY_deriv
-  
-   
-   
-   
+.. currentmodule:: spheroidal.spherical
 
-   
-   
-   
-
-   
-   
-   
-
-   
-   
-   
-
-
-
+.. autofunction:: sphericalY_deriv
