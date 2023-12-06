@@ -31,24 +31,6 @@ class TestSpherical(unittest.TestCase):
                         with self.subTest(s=s,ell=ell,m=m,theta=th):
                             self.assertAlmostEqual(data[j,i],S(th,0))
 
-    def test_spherical_deriv(self):
-        """
-        Test that the spin weighted spherical harmonic derivatives match with its numerical derivative
-        """
-        spins = np.arange(-2,2.5,0.5)
-        for s in spins:
-            # test 5 lowest ell values
-            ells = np.arange(abs(s),abs(s)+5,1)
-            for ell in ells:
-                # generate all possible m values
-                m = np.arange(-ell,ell+1,1)
-                for i,m in enumerate(m):
-                    dS = spheroidal.sphericalY_deriv(s,ell,m)
-                    numerical_dS = spheroidal.sphericalY_numerical_deriv(s,ell,m)
-                    for j,th in enumerate(theta):
-                        with self.subTest(s=s,ell=ell,m=m,theta=th):
-                            self.assertAlmostEqual(dS(th,0),numerical_dS(th,0),places=3)
-
     def test_spherical_deriv_mathematica(self):
         spins = np.arange(-2,2.5,0.5)
         for s in spins:

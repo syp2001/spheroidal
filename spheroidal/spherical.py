@@ -119,30 +119,6 @@ def sphericalY_deriv(s, l, m):
 
     return dY
 
-def sphericalY_numerical_deriv(s, l, m, dx=1e-5):
-    r"""Computes the numerical derivative with respect to theta of the 
-    spin-weighted spherical harmonic with spin weight s, degree l, and order m.
-
-    Parameters
-    ----------
-    s : int or half-integer float
-        spin weight
-    l : int
-        degree
-    m : int or half-integer float
-        order
-    dx : double
-        step size for numerical derivative
-
-    Returns
-    -------
-    function
-        spin weighted spherical harmonic function
-        :math:`\frac{d{}_{s}Y_{lm}(\theta,\phi)}{d\theta}`
-    """
-    S = sphericalY(s, l, m)
-    return lambda theta, phi: (S(theta + dx, phi) - S(theta, phi)) / dx
-
 def sphericalY_deriv2(s, ell, m):
     r"""Computes the second derivative with respect to theta of the 
     spin-weighted spherical harmonic with spin weight s, degree l, and order m.

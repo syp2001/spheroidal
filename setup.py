@@ -12,5 +12,5 @@ setup(
         "Programming Language :: Python :: 3",
         "Natural Language :: English",
     ),
-    install_requires=["scipy","numpy"]
+    install_requires=["scipy","numpy","numba"]
 )
