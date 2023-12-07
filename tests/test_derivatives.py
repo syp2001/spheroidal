@@ -9,7 +9,7 @@ THIS_DIR = Path(__file__).parent
 DATA_DIR = THIS_DIR.parent / "tests/data"
 
 g = 1.5
-theta = np.loadtxt(DATA_DIR / "theta.txt")
+theta = np.linspace(pi / 4, 3 * pi / 4, 3)
 
 
 class TestHarmonics(unittest.TestCase):
@@ -34,7 +34,7 @@ class TestHarmonics(unittest.TestCase):
                     for j, th in enumerate(theta):
                         with self.subTest(s=s, ell=ell, m=m, theta=th):
                             self.assertAlmostEqual(
-                                abs(data[j, i]), abs(Sslm(th, 0)), places=2
+                                abs(data[j, i]), abs(Sslm(th, 0)), places=3
                             )
 
     def test_spherical_expansion_derivative(self):
@@ -57,10 +57,7 @@ class TestHarmonics(unittest.TestCase):
                     Sslm = spheroidal.harmonic_deriv(s, ell, m, g, method="spectral")
                     for j, th in enumerate(theta):
                         with self.subTest(s=s, ell=ell, m=m, theta=th):
-                            if (th != 0) and (th != pi):
-                                self.assertAlmostEqual(
-                                    abs(data[j, i]), abs(Sslm(th, 0)), places=2
-                                )
+                            self.assertAlmostEqual(abs(data[j, i]), abs(Sslm(th, 0)))
 
     def test_spherical_expansion_second_derivative(self):
         """
@@ -84,10 +81,7 @@ class TestHarmonics(unittest.TestCase):
                     )
                     for j, th in enumerate(theta):
                         with self.subTest(s=s, ell=ell, m=m, theta=th):
-                            if (th != 0) and (th != pi):
-                                self.assertAlmostEqual(
-                                    abs(data[j, i]), abs(Sslm(th, 0)), places=1
-                                )
+                            self.assertAlmostEqual(abs(data[j, i]), abs(Sslm(th, 0)))
 
     def test_leaver_second_derivative(self):
         """
@@ -111,7 +105,6 @@ class TestHarmonics(unittest.TestCase):
                     )
                     for j, th in enumerate(theta):
                         with self.subTest(s=s, ell=ell, m=m, theta=th):
-                            if (th != 0) and (th != pi):
-                                self.assertAlmostEqual(
-                                    abs(data[j, i]), abs(Sslm(th, 0)), places=1
-                                )
+                            self.assertAlmostEqual(
+                                abs(data[j, i]), abs(Sslm(th, 0)), places=2
+                            )

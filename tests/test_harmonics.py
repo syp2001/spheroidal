@@ -53,7 +53,7 @@ class TestHarmonics(unittest.TestCase):
                     for j, th in enumerate(theta):
                         with self.subTest(s=s, ell=ell, m=m, theta=th):
                             self.assertAlmostEqual(
-                                abs(data[j, i]), abs(Sslm(th, 0)), places=2
+                                abs(data[j, i]), abs(Sslm(th, 0)), places=3
                             )
 
     def test_methods_agree(self):
