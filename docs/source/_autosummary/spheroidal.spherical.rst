@@ -23,7 +23,6 @@ spherical
       sphericalY_deriv
       sphericalY_deriv2
       sphericalY_eigenvalue
-      sphericalY_numerical_deriv
    
    
 

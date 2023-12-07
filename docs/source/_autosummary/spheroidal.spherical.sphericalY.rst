@@ -1,4 +1,4 @@
-﻿sphericalY
+sphericalY
 ==========
 
 .. currentmodule:: spheroidal.spherical

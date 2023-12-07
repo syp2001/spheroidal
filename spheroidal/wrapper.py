@@ -52,15 +52,15 @@ def eigenvalue(s, ell, m, g, method="spectral", num_terms=None, n_max=100):
     raise ValueError("Invalid method: {}".format(method))
 
 
-def harmonic(s, ell, m, g, method="leaver", num_terms=None, n_max=100):
+def harmonic(s, ell, m, g, method="spectral", num_terms=None, n_max=100):
     r"""Computes the spin-weighted spheroidal harmonic with spin-weight s,
     degree l, order m, and spheroidicity g.
 
     Supported methods:
 
-    * "spectral": spherical expansion method described in Appendix A of
+    * "spectral" (default): spherical expansion method described in Appendix A of
         `(Hughes, 2000) <https://journals.aps.org/prd/pdf/10.1103/PhysRevD.61.084004>`_
-    * "leaver" (default): continued fraction method described in
+    * "leaver": continued fraction method described in
         `(Leaver, 1985) <https://www.edleaver.com/Misc/EdLeaver/Publications/Analytic
         RepresentationForQuasinormalModesOfKerrBlackHoles.pdf>`_
 
@@ -138,8 +138,8 @@ def harmonic_deriv(
     Returns
     -------
     function
-        derivative of the spin-weighted spheroidal harmonic
-        :math:`\frac{d}{d\theta}\left({}_{s}S_{lm}(\theta,\phi)\right)`
+        spin-weighted spheroidal harmonic :math:`{}_{s}S_{lm}(\theta,\phi)`
+        differentiated n_theta times with respect to theta and n_phi times with respect to phi
     """
     if n_theta == 0:
         dS_theta = harmonic(s, ell, m, g, method, num_terms, n_max)
