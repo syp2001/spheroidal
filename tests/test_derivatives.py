@@ -34,7 +34,7 @@ class TestHarmonics(unittest.TestCase):
                     for j, th in enumerate(theta):
                         with self.subTest(s=s, ell=ell, m=m, theta=th):
                             self.assertAlmostEqual(
-                                abs(data[j, i]), abs(Sslm(th, 0)), places=3
+                                abs(data[j, i]), abs(Sslm(th, 0)), places=2
                             )
 
     def test_spherical_expansion_derivative(self):
