@@ -39,7 +39,8 @@ class TestHarmonics(unittest.TestCase):
 
     def test_spherical_expansion_derivative(self):
         """
-        Test if the derivative of the spherical expansion method matches with the derivative computed by Mathematica
+        Test if the derivative of the spherical expansion method matches with 
+        the derivative computed by Mathematica
         """
         spins = np.arange(-2, 2.5, 0.5)
         for s in spins:
@@ -61,7 +62,8 @@ class TestHarmonics(unittest.TestCase):
 
     def test_spherical_expansion_second_derivative(self):
         """
-        Test if the second derivative of the spherical expansion method matches with the derivative computed by Mathematica
+        Test if the second derivative of the spherical expansion method matches 
+        with the derivative computed by Mathematica
         """
         spins = np.arange(-2, 2.5, 0.5)
         for s in spins:
@@ -85,7 +87,8 @@ class TestHarmonics(unittest.TestCase):
 
     def test_leaver_second_derivative(self):
         """
-        Test if the second derivative of Leaver's method matches with the derivative computed by Mathematica
+        Test if the second derivative of Leaver's method matches with the 
+        derivative computed by Mathematica
         """
         spins = np.arange(-2, 2.5, 0.5)
         for s in spins:

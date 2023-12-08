@@ -2,6 +2,7 @@ import unittest
 import numpy as np
 import spheroidal
 from pathlib import Path
+from mpmath import mp
 
 THIS_DIR = Path(__file__).parent
 
@@ -49,12 +50,11 @@ class TestHarmonics(unittest.TestCase):
                 # generate all possible m values
                 m = np.arange(-ell, ell + 1, 1)
                 for i, m in enumerate(m):
-                    Sslm = spheroidal.harmonic(s, ell, m, g, method="leaver")
+                    mp.dps = 30
+                    Sslm = spheroidal.mp_leaver.harmonic_leaver(s, ell, m, g)
                     for j, th in enumerate(theta):
                         with self.subTest(s=s, ell=ell, m=m, theta=th):
-                            self.assertAlmostEqual(
-                                abs(data[j, i]), abs(Sslm(th, 0)), places=3
-                            )
+                            self.assertAlmostEqual(abs(data[j, i]), abs(Sslm(th, 0)))
 
     def test_methods_agree(self):
         """
@@ -73,5 +73,5 @@ class TestHarmonics(unittest.TestCase):
                     for j, th in enumerate(theta):
                         with self.subTest(s=s, ell=ell, m=m, theta=th):
                             self.assertAlmostEqual(
-                                abs(S_leaver(th, 0)), abs(S_spectral(th, 0)), places=2
+                                S_leaver(th, 0), S_spectral(th, 0), places=2
                             )
