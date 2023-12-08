@@ -4,6 +4,42 @@ from .spherical import *
 from .leaver import *
 from .spectral import *
 
+def is_int(x):
+    """
+    Tests if a number is an integer.
+
+    Parameters
+    ----------
+    x : float
+        number to test
+
+    Returns
+    -------
+    bool
+        True if x is an integer, False otherwise
+    """
+    return x == int(x)
+
+def is_valid(s, ell, m):
+    """
+    Tests if the given parameters are valid
+
+    Parameters
+    ----------
+    s : int or half-integer float
+        spin-weight
+    ell : int or half-integer float
+        degree
+    m : int or half-integer float
+        order
+
+    Returns
+    -------
+    bool
+        True if the parameters are valid, False otherwise
+    """
+    l_min = max(abs(s), abs(m))
+    return (ell >= l_min) and is_int(2*ell) and is_int(2*s) and is_int(2*m) and is_int(ell-s) and is_int(m-s)
 
 def eigenvalue(s, ell, m, g, method="spectral", num_terms=None, n_max=100):
     """Computes the spin-weighted spheroidal eigenvalue with spin-weight s,
@@ -40,6 +76,9 @@ def eigenvalue(s, ell, m, g, method="spectral", num_terms=None, n_max=100):
     double
         spin-weighted spheroidal eigenvalue :math:`{}_{s}\lambda_{lm}`
     """
+    if not is_valid(s, ell, m):
+        raise ValueError("Invalid parameters: s={}, ell={}, m={}".format(s, ell, m))
+    
     if g == 0:
         return ell * (ell + 1) - s * (s + 1)
 
@@ -88,11 +127,14 @@ def harmonic(s, ell, m, g, method="spectral", num_terms=None, n_max=100):
         spin-weighted spheroidal harmonic
         :math:`{}_{s}S_{lm}(\theta,\phi)`
     """
+    if not is_valid(s, ell, m):
+        raise ValueError("Invalid parameters: s={}, ell={}, m={}".format(s, ell, m))
+    
     if g == 0:
         return sphericalY(s, ell, m)
 
     if method == "leaver":
-        return harmonic_leaver(s, ell, m, g, num_terms)
+        return harmonic_leaver(s, ell, m, g, num_terms, n_max)
 
     if method == "spectral":
         return harmonic_spectral(s, ell, m, g, num_terms, n_max)
@@ -103,7 +145,7 @@ def harmonic(s, ell, m, g, method="spectral", num_terms=None, n_max=100):
 def harmonic_deriv(
     s, ell, m, g, n_theta=1, n_phi=0, method="spectral", num_terms=None, n_max=100
 ):
-    r"""Computes the derivative with respect of theta of the spin-weighted spheroidal harmonic
+    r"""Computes the derivative of the spin-weighted spheroidal harmonic
     with spin-weight s, degree l, order m, and spheroidicity g.
 
     Supported methods:
@@ -133,7 +175,7 @@ def harmonic_deriv(
     num_terms : int, optional
         number of terms used in the expansion, automatic by default
     n_max : int, optional
-        maximum number of terms in the spherical expansion, defaults to 100
+        maximum number of terms in the expansion, defaults to 100
 
     Returns
     -------
@@ -141,9 +183,12 @@ def harmonic_deriv(
         spin-weighted spheroidal harmonic :math:`{}_{s}S_{lm}(\theta,\phi)`
         differentiated n_theta times with respect to theta and n_phi times with respect to phi
     """
+    if not is_valid(s, ell, m):
+        raise ValueError("Invalid parameters: s={}, ell={}, m={}".format(s, ell, m))
+    
     if n_theta == 0:
         dS_theta = harmonic(s, ell, m, g, method, num_terms, n_max)
-    if n_theta == 1:
+    elif n_theta == 1:
         if g == 0:
             dS_theta = sphericalY_deriv(s, ell, m)
         elif method == "leaver":
@@ -152,7 +197,7 @@ def harmonic_deriv(
             dS_theta = harmonic_spectral_deriv(s, ell, m, g, num_terms, n_max)
         else:
             raise ValueError('Invalid method: "{}"'.format(method))
-    if n_theta == 2:
+    elif n_theta == 2:
         if g == 0:
             dS_theta = sphericalY_deriv2(s, ell, m)
         elif method == "leaver":
@@ -161,5 +206,7 @@ def harmonic_deriv(
             dS_theta = harmonic_spectral_deriv2(s, ell, m, g, num_terms, n_max)
         else:
             raise ValueError('Invalid method: "{}"'.format(method))
+    else:
+        raise ValueError("Only the first two derivatives wrt theta are currently supported")
 
     return lambda theta, phi: dS_theta(theta, phi) * (m * 1j) ** n_phi
