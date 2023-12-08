@@ -52,7 +52,7 @@ def eigenvalue_spectral(s, ell, m, g, num_terms=None, n_max=100):
         )
 
 
-def harmonic_spectral(s, ell, m, g, num_terms, n_max=100):
+def harmonic_spectral(s, ell, m, g, num_terms=None, n_max=100):
     r"""Computes the spin-weighted spheroidal harmonic with spin-weight s,
     degree l, order m, and spheroidicity g using the spherical expansion method.
 
@@ -100,7 +100,7 @@ def harmonic_spectral(s, ell, m, g, num_terms, n_max=100):
     return Sslm
 
 
-def harmonic_spectral_deriv(s, ell, m, g, num_terms, n_max=100):
+def harmonic_spectral_deriv(s, ell, m, g, num_terms=None, n_max=100):
     r"""Computes the derivative with respect to theta of the spin-weighted
     spheroidal harmonic with spin-weight s, degree l, order m, and spheroidicity g
     using the spherical expansion method.
@@ -146,7 +146,7 @@ def harmonic_spectral_deriv(s, ell, m, g, num_terms, n_max=100):
     return dS
 
 
-def harmonic_spectral_deriv2(s, ell, m, g, num_terms, n_max=100):
+def harmonic_spectral_deriv2(s, ell, m, g, num_terms=None, n_max=100):
     r"""Computes the second derivative with respect to theta of the spin-weighted
     spheroidal harmonic with spin-weight s, degree l, order m, and
     spheroidicity g using the spherical expansion method.

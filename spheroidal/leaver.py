@@ -266,21 +266,26 @@ def leaver_coefficients(s, ell, m, g, num_terms=None, n_max=100):
         )
     )
 
-    # sign = (-1.0) ** (ell + m - s + 0j) if m <= s else (-1.0) ** (ell + m - s + 1 + 0j)
+    # determine the phase by enforcing continuity as gamma -> 0
+    # when gamma = 0, the series simplifies as follows:
+    # a[n_] := -2 (n + 1) (n + 2 k1 + 1);
+    # b[n_] := n (n - 1) + 2 n (k1 + k2 + 1) + (k1 + k2) (k1 + k2 + 1) - (s (s + 1) + \[Lambda]);
+    # Simplify[Sum[Product[-b[n]/a[n], {n, 0, i}] x^(i + 1), {i, 0, Infinity}]]
+    # evaluate this expression at a test value of theta and correct the phase so that it matches with sphericalY
+    theta_test = 1
+    eigenvalue = ell * (ell + 1) - s * (s + 1)
+    current_phase = np.sign(
+        special.hyp2f1(
+            0.5 + k1 + k2 - sqrt(1 + 4 * s + 4 * s**2 + 4 * eigenvalue) / 2.0,
+            0.5 + k1 + k2 + sqrt(1 + 4 * s + 4 * s**2 + 4 * eigenvalue) / 2.0,
+            1 + 2 * k1,
+            (1 + cos(theta_test)) / 2.0,
+        )
+    )
+    correct_phase = sphericalY(s, ell, m)(theta_test, 0)
+    correct_phase = correct_phase / abs(correct_phase)
 
-    # square of the theta component of Sslm written in terms of x = 1+u = 1+cos(theta)
-    # real_sslm2 = lambda x: np.real(
-    #     np.exp((g + np.conj(g)) * (x - 1))
-    #     * x ** (2 * k1)
-    #     * (2 - x) ** (2 * k2)
-    #     * np.polynomial.Polynomial(a)(x)
-    #     * np.conj(np.polynomial.Polynomial(a)(x))
-    # )
-    # numerical_norm = sqrt(2 * np.pi * (scipy.integrate.quad(real_sslm2, 0, 2)[0]))
-
-    # print(norm,numerical_norm)
-
-    return a[:n] / norm
+    return correct_phase / current_phase * a[:n] / norm
 
 
 def harmonic_leaver(s, ell, m, g, num_terms=None, n_max=100):
