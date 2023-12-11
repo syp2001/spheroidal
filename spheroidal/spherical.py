@@ -185,9 +185,10 @@ def _diag0(s, m, g, l):
     """
     if l >= 1:
         return (
-            -(l * (1 + l))
-            + (2 * g * m * s**2) / (l + l**2)
-            + (
+            (l * (1 + l))
+            - s * (s + 1)
+            - (2 * g * m * s**2) / (l + l**2)
+            - (
                 g**2
                 * (
                     1
@@ -198,9 +199,9 @@ def _diag0(s, m, g, l):
             / 3
         )
     if l == 1 / 2:
-        return g**2 / 3 - 3 / 4 + (8 * g * m * s**2) / 3
+        return -g**2 / 3 + 3 / 4 - s*(s+1) - (8 * g * m * s**2) / 3
     if l == 0:
-        return g**2 / 3
+        return -g**2 / 3 - s*(s+1)
 
 
 @njit
@@ -225,7 +226,7 @@ def _diag1(s, m, g, l):
     """
     if l >= 1 / 2:
         return (
-            -2
+            2
             * (-1) ** (2 * (l + m))
             * g
             * (2 * l + l**2 + g * m)
@@ -241,7 +242,7 @@ def _diag1(s, m, g, l):
         ) / (l * (2 + l) * (1 + 3 * l + 2 * l**2))
     if l == 0:
         return (
-            -2 * (-1) ** (2 * m) * g * s * sqrt((1 - m**2) * (1 - s**2))
+            2 * (-1) ** (2 * m) * g * s * sqrt((1 - m**2) * (1 - s**2))
         ) / sqrt(3)
 
 
@@ -265,7 +266,7 @@ def _diag2(s, m, g, l):
     -------
     double
     """
-    return (
+    return -(
         (-1) ** (2 * (l + m))
         * g**2
         * sqrt(
@@ -380,7 +381,7 @@ def separation_constants(s, m, g, num_terms):
     """
     if np.iscomplex(g):
         matrix = spectral_matrix_complex(s, m, g, num_terms)
-        return sorted(np.linalg.eigvals(matrix), key=abs, reverse=True)
+        return sorted(np.linalg.eigvals(matrix), key=abs)
     else:
         g = np.real_if_close(g)
         matrix_bands = spectral_matrix_bands(s, m, g, num_terms)
@@ -424,10 +425,10 @@ def mixing_coefficients(s, ell, m, g, num_terms):
 
         eigs_output = eig_banded(bands, lower=True)
         # eig_banded returns the separation constants in ascending order
-        # so eigenvectors are sorted by decreasing spheroidal eigenvalue
+        # so eigenvectors are sorted by increasing spheroidal eigenvalue
         eigenvectors = np.transpose(eigs_output[1])
 
         # enforce sign convention that ell=l mode is positive
-        sign = np.sign(eigenvectors[num_terms - 1 - int(ell - l_min)][int(ell - l_min)])
+        sign = np.sign(eigenvectors[int(ell - l_min)][int(ell - l_min)])
 
-        return sign * eigenvectors[num_terms - 1 - int(ell - l_min)]
+        return sign * eigenvectors[int(ell - l_min)]

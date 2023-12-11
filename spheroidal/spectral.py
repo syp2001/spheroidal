@@ -30,23 +30,18 @@ def eigenvalue_spectral(s, ell, m, g, num_terms=None, n_max=100):
     l_min = max(abs(s), abs(m))
 
     if num_terms is None:
-        prev_sep_const = separation_constants(s, m, g, num_terms=10)[
-            9 - int(ell - l_min)
-        ]
+        prev_sep_const = separation_constants(s, m, g, num_terms=10)[int(ell - l_min)]
 
         for i in range(20, n_max, 10):
-            sep_const = separation_constants(s, m, g, num_terms=i)[
-                i - 1 - int(ell - l_min)
-            ]
+            sep_const = separation_constants(s, m, g, num_terms=i)[int(ell - l_min)]
             # return eigenvalue once machine precision is reached
             if sep_const == prev_sep_const:
-                return -sep_const - s * (s + 1) + g**2 - 2 * m * g
+                return sep_const + g**2 - 2 * m * g
             prev_sep_const = sep_const
-        return -sep_const - s * (s + 1) + g**2 - 2 * m * g
+        return sep_const + g**2 - 2 * m * g
     else:
         return (
-            -separation_constants(s, m, g, num_terms)[num_terms - 1 - int(ell - l_min)]
-            - s * (s + 1)
+            separation_constants(s, m, g, num_terms)[int(ell - l_min)]
             + g**2
             - 2 * m * g
         )
