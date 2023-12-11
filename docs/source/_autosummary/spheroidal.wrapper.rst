@@ -1,4 +1,4 @@
-wrapper
+﻿wrapper
 =======
 
 .. automodule:: spheroidal.wrapper
@@ -18,6 +18,8 @@ wrapper
       eigenvalue
       harmonic
       harmonic_deriv
+      is_int
+      is_valid
    
    
 
