@@ -153,6 +153,7 @@ def sphericalY_deriv2(s, ell, m):
     dS = sphericalY_deriv(s, ell, m)
 
     def dS2(theta, phi):
+        theta = np.where(abs(theta) < 1e-6, 1e-6, theta)
         return (
             +((m + s * cos(theta)) ** 2) / sin(theta) ** 2
             - s
