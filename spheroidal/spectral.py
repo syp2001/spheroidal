@@ -173,6 +173,7 @@ def harmonic_spectral_deriv2(s, ell, m, g, num_terms=None, n_max=100):
     dS = harmonic_spectral_deriv(s, ell, m, g, num_terms, n_max)
 
     def dS2(theta, phi):
+        theta = np.where(abs(theta) < 1e-6, 1e-6, theta)
         return (
             g**2 * sin(theta) ** 2
             + (m + s * cos(theta)) ** 2 / sin(theta) ** 2
