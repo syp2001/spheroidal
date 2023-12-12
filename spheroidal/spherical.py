@@ -382,7 +382,7 @@ def separation_constants(s, m, g, num_terms):
     """
     if np.iscomplex(g):
         matrix = spectral_matrix_complex(s, m, g, num_terms)
-        return sorted(np.linalg.eigvals(matrix), key=abs)
+        return np.sort(np.linalg.eigvals(matrix))
     else:
         g = np.real_if_close(g)
         matrix_bands = spectral_matrix_bands(s, m, g, num_terms)
