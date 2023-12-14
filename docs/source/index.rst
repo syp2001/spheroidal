@@ -12,9 +12,9 @@ Overview
 
 |github-link|_ is a python library for computing spin weighted spheroidal
 harmonics along with their eigenvalues and derivatives. It supports both integer
-and half integer spin weights as well as both real and complex spheroidicities.
-The library provides implementations of the spherical expansion method described
-in `(Hughes, 2000) <https://journals.aps.org/prd/abstract/10.1103/PhysRevD.61.084004>`_
+and half integer spin weights. The library provides implementations of the 
+spherical expansion method described in `(Hughes, 2000) 
+<https://journals.aps.org/prd/abstract/10.1103/PhysRevD.61.084004>`_
 and the continued fraction method from `(Leaver, 1985) <https://www.edleaver.com/
 Misc/EdLeaver/Publications/AnalyticRepresentationForQuasinormalModesOfKerrBlackHoles.pdf>`_.
 Also included is code for computing spin weighted spherical harmonics and 
