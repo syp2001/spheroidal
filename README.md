@@ -1,5 +1,5 @@
 [![GitHub release (with filter)](https://img.shields.io/github/v/release/syp2001/spheroidal)](https://github.com/syp2001/spheroidal/releases)
-[![Test Status](https://github.com/syp2001/spheroidal/actions/workflows/tests.yml/badge.svg)](https://github.com/syp2001/spheroidal/actions)
+[![Test Status](https://github.com/syp2001/spheroidal/actions/workflows/python-publish.yml/badge.svg)](https://github.com/syp2001/spheroidal/actions)
 [![PyPI - Version](https://img.shields.io/pypi/v/spheroidal)](https://pypi.org/project/spheroidal/)
 [![Conda Version](https://img.shields.io/conda/vn/conda-forge/spheroidal.svg)](https://anaconda.org/conda-forge/spheroidal)
 [![Documentation Status](https://readthedocs.org/projects/spheroidal/badge/?version=latest)](https://spheroidal.readthedocs.io/en/latest/?badge=latest)
