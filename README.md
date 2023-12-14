@@ -18,6 +18,8 @@ for more information.
 
 ## Installation
 
+Install using Anaconda
+
 ```bash
    conda install -c conda-forge spheroidal
 ```
