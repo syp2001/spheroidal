@@ -3,9 +3,12 @@ from .spherical import *
 from .spectral import *
 import numpy as np
 from scipy.optimize import newton
-from scipy import special
+import scipy.special
 from numpy.polynomial import Polynomial
+import mpmath 
+from mpmath import mp, mpf, mpc
 from numba import njit
+import warnings
 
 
 @njit
@@ -51,6 +54,8 @@ def continued_fraction(A, s, ell, m, g, n_max=100):
 
     C = f_prev
     D = 0
+    
+    converged = False
     for n in range(1, n_max):
         C = beta(n, A) - alpha(n - 1) * gamma(n) / C
         if C == 0:
@@ -63,8 +68,14 @@ def continued_fraction(A, s, ell, m, g, n_max=100):
         f = C * D * f_prev
         # break when tolerance is reached
         if f == f_prev:
+            converged = True
             break
         f_prev = f
+    if not converged:
+        raise RuntimeError(
+            f"Continued fraction failed to converge within {n_max} iterations. "
+            "Try increasing n_max."
+        )
     return f
 
 
@@ -113,6 +124,8 @@ def continued_fraction_deriv(A, s, ell, m, g, n_max=100):
     dC = df_prev
     D = 0
     dD = 0
+
+    converged = False
     # loop until the maximum number of iterations is reached
     for n in range(1, n_max):
         dC = -1 + alpha(n - 1) * gamma(n) * dC / C**2
@@ -129,13 +142,20 @@ def continued_fraction_deriv(A, s, ell, m, g, n_max=100):
         df = dC * D * f_prev + C * dD * f_prev + C * D * df_prev
         # break when tolerance is reached
         if df == df_prev:
+            converged = True
             break
         f_prev = f
         df_prev = df
+    
+    if not converged:
+        raise RuntimeError(
+            f"Continued fraction failed to converge within {n_max} iterations. "
+            "Try increasing n_max."
+        )
     return df
 
 
-def eigenvalue_leaver(s, ell, m, g):
+def eigenvalue_leaver(s, ell, m, g, guess=None, prec=None, n_max=100):
     """Computes the spin weighted spheroidal eigenvalue with spin-weight s, degree l,
     order m, and spheroidicity g using the continued fraction method described in
     `(Leaver, 1985) <https://www.edleaver.com/Misc/EdLeaver/Publications/Analytic
@@ -151,6 +171,8 @@ def eigenvalue_leaver(s, ell, m, g):
         order
     g : complex
         spheroidicity
+    prec : int
+        numerical precision use when computing the eigenvalue, defaults to machine precision
 
     Returns
     -------
@@ -159,21 +181,40 @@ def eigenvalue_leaver(s, ell, m, g):
     """
     spectral_A = (
         eigenvalue_spectral(s, ell, m, g, int(ell) + 5) - g**2 + 2 * m * g
+        if guess is None
+        else guess
     )  # approximate angular separation constant using spectral method
+
     # compute eigenvalue using root finding with newton's method
-    return (
-        newton(
-            continued_fraction,
-            args=(s, ell, m, g),
-            x0=spectral_A,
-            fprime=continued_fraction_deriv,
+    if prec is None:
+        return (
+            newton(
+                continued_fraction,
+                args=(s, ell, m, g),
+                x0=spectral_A,
+                fprime=continued_fraction_deriv,
+            )
+            + g**2
+            - 2 * m * g
         )
-        + g**2
-        - 2 * m * g
-    )
+    else:
+        # use mpmath if prec is specified
+        mp.dps = prec
+        f = lambda A: continued_fraction.py_func(A, s, ell, m, g, n_max)
+        df = lambda A: continued_fraction_deriv.py_func(A, s, ell, m, g, n_max)
+        return (
+            mpmath.findroot(
+                f,
+                x0=spectral_A,
+                df=df,
+                solver="newton",
+            )
+            + mpf(g)**2
+            - 2 * m * mpf(g)
+        )
 
 
-def leaver_coefficients(s, ell, m, g, num_terms=None, n_max=100):
+def leaver_coefficients(s, ell, m, g, num_terms=None, n_max=100, prec=None):
     """Computes the coefficients of the Frobenius expansion in equation 18 of
     `(Leaver, 1985) <https://www.edleaver.com/Misc/EdLeaver/Publications/Analytic
     RepresentationForQuasinormalModesOfKerrBlackHoles.pdf>`_
@@ -198,15 +239,22 @@ def leaver_coefficients(s, ell, m, g, num_terms=None, n_max=100):
     numpy.ndarray
         normalized array of coefficients
     """
-    if np.iscomplex(g):
-        a = np.zeros(n_max, dtype=np.cdouble)
+    if prec is not None:
+        mp.dps = prec
+        lib = mpmath
+        poch, re, pi = mpmath.rf, mpmath.re, mp.pi
+        a = mpmath.matrix(1,n_max)
+        A = eigenvalue_leaver(s, ell, m, g, prec=prec)
+        g = mpc(g)
+        A = A - g**2 + 2 * m * g # angular separation constant
+        
     else:
-        g = np.real_if_close(g)
-        a = np.zeros(n_max)
-
-    A = (
-        eigenvalue_spectral(s, ell, m, g) - g**2 + 2 * m * g
-    )  # angular separation constant
+        lib = scipy.special
+        poch, re, pi = scipy.special.poch, np.real, np.pi
+        a = np.zeros(n_max, dtype=np.cdouble) if np.iscomplex(g) else np.zeros(n_max)
+        A = (
+            eigenvalue_spectral(s, ell, m, g) - g**2 + 2 * m * g
+        )
 
     k1 = 1 / 2 * abs(m - s)
     k2 = 1 / 2 * abs(m + s)
@@ -221,7 +269,7 @@ def leaver_coefficients(s, ell, m, g, num_terms=None, n_max=100):
     gamma = lambda n: 2 * g * (n + k1 + k2 + s)
 
     # compute coefficients starting from a0 = 1 and normalize at the end
-    a[0] = 1
+    a[0] = 1 if prec is None else mpf(1)
     a[1] = -beta(0, A) / alpha(0) * a[0]
 
     # if num_terms is specified, loop until that number of terms is reached
@@ -242,11 +290,12 @@ def leaver_coefficients(s, ell, m, g, num_terms=None, n_max=100):
         # normterm comes from Integrate[Exp[(g + Conjugate[g])*(x - 1)]*x^(2*k1)*(2 - x)^(2*k2)*(c*x^i), {x, 0, 2}]
         # c = \sum_0^i a_j^* a_{i-j} is the coefficient of x^i in (\sum_0^i a_j x^j)^*(\sum_0^i a_j x^j) and x = 1+u = 1+cos(theta)
         # terms that are independent of i have been factored out
+        coeff = np.conj(a[: i + 1]).dot(a[i::-1]) if prec is None else mpmath.fdot(a[i::-1],a[: i + 1],conjugate=True)
         normterm = (
             2**i
-            * special.poch(i + 2 * (1 + k1 + k2), -2 * k2 - 1)
-            * special.hyp1f1(1 + i + 2 * k1, i + 2 * (1 + k1 + k2), 4 * np.real(g))
-            * np.conj(a[: i + 1]).dot(a[i::-1])
+            * poch(i + 2 * (1 + k1 + k2), -2 * k2 - 1)
+            * lib.hyp1f1(1 + i + 2 * k1, i + 2 * (1 + k1 + k2), 4 * re(g))
+            * coeff
         )
 
         # break once machine precision is reached unless num_terms is specified
@@ -255,13 +304,13 @@ def leaver_coefficients(s, ell, m, g, num_terms=None, n_max=100):
         norm = norm + normterm
 
     # multiply by the terms factored out earlier along with a factor of 2*pi from the integral over phi
-    norm = sqrt(
-        np.real_if_close(
+    norm = lib.sqrt(
+        re(
             2
             * pi
             * 2 ** (1 + 2 * k1 + 2 * k2)
-            * exp(-2 * np.real(g))
-            * special.gamma(1 + 2 * k2)
+            * lib.exp(-2 * re(g))
+            * lib.gamma(1 + 2 * k2)
             * norm
         )
     )
@@ -275,11 +324,11 @@ def leaver_coefficients(s, ell, m, g, num_terms=None, n_max=100):
     theta_test = 1
     eigenvalue = ell * (ell + 1) - s * (s + 1)
     current_phase = np.sign(
-        special.hyp2f1(
-            0.5 + k1 + k2 - sqrt(1 + 4 * s + 4 * s**2 + 4 * eigenvalue) / 2.0,
-            0.5 + k1 + k2 + sqrt(1 + 4 * s + 4 * s**2 + 4 * eigenvalue) / 2.0,
+        lib.hyp2f1(
+            0.5 + k1 + k2 - lib.sqrt(1 + 4 * s + 4 * s**2 + 4 * eigenvalue) / 2.0,
+            0.5 + k1 + k2 + lib.sqrt(1 + 4 * s + 4 * s**2 + 4 * eigenvalue) / 2.0,
             1 + 2 * k1,
-            (1 + cos(theta_test)) / 2.0,
+            (1 + lib.cos(theta_test)) / 2.0,
         )
     )
     correct_phase = sphericalY(s, ell, m)(theta_test, 0)
@@ -288,7 +337,7 @@ def leaver_coefficients(s, ell, m, g, num_terms=None, n_max=100):
     return correct_phase / current_phase * a[:n] / norm
 
 
-def harmonic_leaver(s, ell, m, g, num_terms=None, n_max=100):
+def harmonic_leaver(s, ell, m, g, num_terms=None, n_max=100, prec=None):
     r"""Computes the spin-weighted spheroidal harmonic with spin-weight s,
     degree l, order m, and spheroidicity g using Leaver's method.
 
@@ -313,26 +362,32 @@ def harmonic_leaver(s, ell, m, g, num_terms=None, n_max=100):
         spin-weighted spheroidal harmonic
         :math:`{}_{s}S_{lm}(\theta,\phi)`
     """
+    if prec is not None:
+        mp.dps = prec
+        lib = mpmath
+    else:
+        lib = np
+
     k1 = 1 / 2 * abs(m - s)
     k2 = 1 / 2 * abs(m + s)
 
-    a = leaver_coefficients(s, ell, m, g, num_terms, n_max)
+    a = leaver_coefficients(s, ell, m, g, num_terms, n_max, prec)
 
     def Sslm(theta, phi):
-        u = np.cos(theta)
+        u = lib.cos(theta)
         basis = [(1 + u) ** n for n in range(len(a))]
         return (
-            np.exp(g * u)
+            lib.exp(g * u)
             * (1 + u) ** k1
             * (1 - u) ** k2
             * a.dot(basis)
-            * np.exp(1j * m * phi)
+            * lib.exp(1j * m * phi)
         )
 
     return Sslm
 
 
-def harmonic_leaver_deriv(s, ell, m, g, num_terms=None, n_max=100):
+def harmonic_leaver_deriv(s, ell, m, g, num_terms=None, n_max=100, prec=None):
     r"""Computes the derivative with respect to theta of the spin-weighted
     spheroidal harmonic with spin-weight s, degree l, order m, and
     spheroidicity g using Leaver's method.
@@ -358,38 +413,44 @@ def harmonic_leaver_deriv(s, ell, m, g, num_terms=None, n_max=100):
         derivative of the spin-weighted spheroidal harmonic
         :math:`\frac{d}{d\theta}\left({}_{s}S_{lm}(\theta,\phi)\right)`
     """
+    if prec is not None:
+        mp.dps = prec
+        lib = mpmath
+    else:
+        lib = np
+
     k1 = 1 / 2 * abs(m - s)
     k2 = 1 / 2 * abs(m + s)
 
-    a = leaver_coefficients(s, ell, m, g, num_terms, n_max)
-
-    series = Polynomial(a)
-    series_deriv = series.deriv()
+    a = leaver_coefficients(s, ell, m, g, num_terms, n_max, prec)
+    a_deriv = np.array([n * a[n] for n in range(len(a))])[1:]
 
     def dS(theta, phi):
         theta = np.where(theta == 0, 1e-14, theta)
-        u = np.cos(theta)
+        u = lib.cos(theta)
+
+        basis = np.array([(1 + u) ** n for n in range(len(a))])
         # differentiate series using product/chain rule
         # f[theta_] := E^(g Cos[theta]) (1 + Cos[theta])^(k1) (1 - Cos[theta])^(k2)
         # Simplify[f'[theta], Assumptions -> Element[2 k1 | 2 k2, Integers]]
         return (
-            -np.sin(theta)
-            * np.exp(g * u)
+            -lib.sin(theta)
+            * lib.exp(g * u)
             * (1 + u) ** k1
             * (1 - u) ** k2
-            * series_deriv(1 + u)
-            + np.exp(g * cos(theta))
-            * (1 - cos(theta)) ** k2
-            * (1 + cos(theta)) ** k1
-            * (-g - k1 + k2 + (k1 + k2) * cos(theta) + g * cos(theta) ** 2)
-            / sin(theta)
-            * series(1 + u)
-        ) * np.exp(1j * m * phi)
+            * basis[:-1].dot(a_deriv)
+            + lib.exp(g * lib.cos(theta))
+            * (1 - lib.cos(theta)) ** k2
+            * (1 + lib.cos(theta)) ** k1
+            * (-g - k1 + k2 + (k1 + k2) * lib.cos(theta) + g * lib.cos(theta) ** 2)
+            / lib.sin(theta)
+            * basis.dot(a)
+        ) * lib.exp(1j * m * phi)
 
     return dS
 
 
-def harmonic_leaver_deriv2(s, ell, m, g, num_terms, n_max=100):
+def harmonic_leaver_deriv2(s, ell, m, g, num_terms, n_max=100, prec=None):
     r"""
     Computes the second derivative with respect to theta of the spin-weighted
     spheroidal harmonic with spin-weight s, degree l, order m, and spheroidicity g
@@ -416,19 +477,25 @@ def harmonic_leaver_deriv2(s, ell, m, g, num_terms, n_max=100):
         second derivative of the spin-weighted spheroidal harmonic
         :math:`\frac{d^2}{d\theta^2}\left({}_{s}S_{lm}(\theta,\phi)\right)`
     """
+    if prec is not None:
+        mp.dps = prec
+        lib = mpmath
+    else:
+        lib = np
+
     eigenvalue = eigenvalue_spectral(s, ell, m, g, num_terms, n_max)
 
-    S = harmonic_leaver(s, ell, m, g, num_terms, n_max)
-    dS = harmonic_leaver_deriv(s, ell, m, g, num_terms, n_max)
+    S = harmonic_leaver(s, ell, m, g, num_terms, n_max, prec)
+    dS = harmonic_leaver_deriv(s, ell, m, g, num_terms, n_max, prec)
 
     def dS2(theta, phi):
         return (
-            g**2 * sin(theta) ** 2
-            + (m + s * cos(theta)) ** 2 / sin(theta) ** 2
-            + 2 * g * s * cos(theta)
+            g**2 * lib.sin(theta) ** 2
+            + (m + s * lib.cos(theta)) ** 2 / lib.sin(theta) ** 2
+            + 2 * g * s * lib.cos(theta)
             - s
             - 2 * m * g
             - eigenvalue
-        ) * S(theta, phi) - cos(theta) / sin(theta) * dS(theta, phi)
+        ) * S(theta, phi) - lib.cos(theta) / lib.sin(theta) * dS(theta, phi)
 
     return dS2
