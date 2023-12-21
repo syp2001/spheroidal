@@ -13,8 +13,10 @@ and half integer spin weights. The library provides implementations of the
 spherical expansion method described in [(Hughes, 2000)](https://journals.aps.org/prd/abstract/10.1103/PhysRevD.61.084004)
 and the continued fraction method from [(Leaver, 1985)](https://www.edleaver.com/Misc/EdLeaver/Publications/AnalyticRepresentationForQuasinormalModesOfKerrBlackHoles.pdf)
 Also included is code for computing spin weighted spherical harmonics and 
-spherical-spheroidal mixing coefficients. See the [documenation](https://spheroidal.readthedocs.io)
+spherical-spheroidal mixing coefficients. See the [documentation](https://spheroidal.readthedocs.io)
 for more information.
+
+![](https://raw.githubusercontent.com/syp2001/spheroidal/main/docs/source/images/s%3D-2l%3D2.png)
 
 ## Installation
 
