@@ -20,6 +20,10 @@ Misc/EdLeaver/Publications/AnalyticRepresentationForQuasinormalModesOfKerrBlackH
 Also included is code for computing spin weighted spherical harmonics and 
 spherical-spheroidal mixing coefficients.
 
+.. image:: images/s-2.png
+   :align: center
+   :width: 100%
+
 Installation
 ------------
 Install using conda
