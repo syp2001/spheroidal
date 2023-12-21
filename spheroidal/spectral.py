@@ -90,7 +90,8 @@ def harmonic_spectral(s, ell, m, g, num_terms=None, n_max=100):
                 for l in np.arange(l_min, l_min + len(coefficients), 1)
             ]
         )
-        return np.array(coefficients).dot(spherical_harmonics)
+        # tensordot allows theta and phi to be multidimensional arrays
+        return np.tensordot(coefficients,spherical_harmonics,axes=1)
 
     return Sslm
 
@@ -136,7 +137,7 @@ def harmonic_spectral_deriv(s, ell, m, g, num_terms=None, n_max=100):
                 for l in np.arange(l_min, l_min + len(coefficients))
             ]
         )
-        return np.array(coefficients).dot(spherical_harmonics)
+        return np.tensordot(coefficients,spherical_harmonics,axes=1)
 
     return dS
 

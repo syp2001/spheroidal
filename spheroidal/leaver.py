@@ -325,7 +325,7 @@ def harmonic_leaver(s, ell, m, g, num_terms=None, n_max=100):
             np.exp(g * u)
             * (1 + u) ** k1
             * (1 - u) ** k2
-            * a.dot(basis)
+            * np.tensordot(a,basis,axes=1)
             * np.exp(1j * m * phi)
         )
 
