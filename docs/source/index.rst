@@ -18,15 +18,16 @@ spherical expansion method described in `(Hughes, 2000)
 and the continued fraction method from `(Leaver, 1985) <https://www.edleaver.com/
 Misc/EdLeaver/Publications/AnalyticRepresentationForQuasinormalModesOfKerrBlackHoles.pdf>`_.
 Also included is code for computing spin weighted spherical harmonics and 
-spherical-spheroidal mixing coefficients.
+spherical-spheroidal mixing coefficients. Some example code for visualizing and
+animating the harmonics is available on the `Visualization <notebooks/Visualization.html>`_ page.
 
-.. image:: images/s-2.png
+.. image:: images/s-2.gif
    :align: center
    :width: 100%
 
 Installation
 ------------
-Install using conda
+Install using Anaconda
 
 .. code-block:: bash
 
@@ -67,6 +68,7 @@ Basic Usage
 
    notebooks/Background
    notebooks/Getting Started
+   notebooks/Visualization
 
 .. _API Reference:
 
