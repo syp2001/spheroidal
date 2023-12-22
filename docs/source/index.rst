@@ -21,7 +21,7 @@ Also included is code for computing spin weighted spherical harmonics and
 spherical-spheroidal mixing coefficients. Some example code for visualizing and
 animating the harmonics is available on the `Visualization <notebooks/Visualization.html>`_ page.
 
-.. image:: images/s-2.gif
+.. image:: images/s-2.png
    :align: center
    :width: 100%
 
