@@ -42,8 +42,15 @@ def is_valid(s, ell, m):
     return (ell >= l_min) and is_int(2*ell) and is_int(2*s) and is_int(2*m) and is_int(ell-s) and is_int(m-s)
 
 def eigenvalue(s, ell, m, g, method="spectral", num_terms=None, n_max=100):
-    """Computes the spin-weighted spheroidal eigenvalue with spin-weight s,
-    degree l, order m, and spheroidicity g.
+    r"""Computes the spin-weighted spheroidal eigenvalue with spin-weight s,
+    degree l, order m, and spheroidicity g. Specifically, this function solves for
+    :math:`{}_s\lambda_{lm}` in the following equation.
+
+    .. math::
+
+        \left[\frac{1}{\sin \theta} \frac{d}{d \theta}\left(\sin \theta \frac{d}{d \theta}\right)
+        -\gamma^2 \sin ^2 \theta-\frac{(m+s \cos \theta)^2}{\sin ^2 \theta}-2 \gamma s \cos \theta+s+2m\gamma 
+        + { }_s \lambda_{l m}\right]{ }_s S_{l m}^\gamma(\theta)=0
 
     Supported methods:
 
@@ -93,7 +100,15 @@ def eigenvalue(s, ell, m, g, method="spectral", num_terms=None, n_max=100):
 
 def harmonic(s, ell, m, g, method="spectral", num_terms=None, n_max=100):
     r"""Computes the spin-weighted spheroidal harmonic with spin-weight s,
-    degree l, order m, and spheroidicity g.
+    degree l, order m, and spheroidicity g. Specifically, this function returns
+    :math:`S_{l m}^\gamma(\theta)e^{im\phi}` where :math:`S_{l m}^\gamma(\theta)` 
+    is a solution to the following equation.
+
+    .. math::
+
+        \left[\frac{1}{\sin \theta} \frac{d}{d \theta}\left(\sin \theta \frac{d}{d \theta}\right)
+        -\gamma^2 \sin ^2 \theta-\frac{(m+s \cos \theta)^2}{\sin ^2 \theta}-2 \gamma s \cos \theta+s+2m\gamma 
+        + { }_s \lambda_{l m}\right]{ }_s S_{l m}^\gamma(\theta)=0
 
     Supported methods:
 
