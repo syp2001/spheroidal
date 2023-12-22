@@ -7,7 +7,7 @@ long_description = (this_directory / "README.md").read_text()
 
 setup(
     name="spheroidal",
-    version="0.1.0",
+    version="0.1.1",
     author="Seyong Park",
     description="Library for computing spin-weighted spheroidal harmonics",
     long_description=long_description,

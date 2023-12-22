@@ -48,6 +48,7 @@ def eigenvalue(s, ell, m, g, method="spectral", num_terms=None, n_max=100):
 
     .. math::
 
+        \small
         \left[\frac{1}{\sin \theta} \frac{d}{d \theta}\left(\sin \theta \frac{d}{d \theta}\right)
         -\gamma^2 \sin ^2 \theta-\frac{(m+s \cos \theta)^2}{\sin ^2 \theta}-2 \gamma s \cos \theta+s+2m\gamma 
         + { }_s \lambda_{l m}\right]{ }_s S_{l m}^\gamma(\theta)=0
@@ -106,6 +107,7 @@ def harmonic(s, ell, m, g, method="spectral", num_terms=None, n_max=100):
 
     .. math::
 
+        \small
         \left[\frac{1}{\sin \theta} \frac{d}{d \theta}\left(\sin \theta \frac{d}{d \theta}\right)
         -\gamma^2 \sin ^2 \theta-\frac{(m+s \cos \theta)^2}{\sin ^2 \theta}-2 \gamma s \cos \theta+s+2m\gamma 
         + { }_s \lambda_{l m}\right]{ }_s S_{l m}^\gamma(\theta)=0
