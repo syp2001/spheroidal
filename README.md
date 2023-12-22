@@ -4,6 +4,7 @@
 [![Conda Version](https://img.shields.io/conda/vn/conda-forge/spheroidal.svg)](https://anaconda.org/conda-forge/spheroidal)
 [![Documentation Status](https://readthedocs.org/projects/spheroidal/badge/?version=latest)](https://spheroidal.readthedocs.io/en/latest/?badge=latest)
 [![GitHub License](https://img.shields.io/github/license/syp2001/spheroidal)](https://github.com/syp2001/spheroidal/blob/main/LICENSE)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.10426098.svg)](https://doi.org/10.5281/zenodo.10426098)
 
 # Spheroidal
 
